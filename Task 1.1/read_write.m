@@ -1,30 +1,30 @@
-global A = csvread('sensor_data.csv');  #do not change this line
-global ax ay az gx gy gz pitch roll;
+global A = csvread('csv_matter.csv');  #do not change this line
 
 ################################################
 #######Declare your global variables here#######
 ################################################
 
+global ax ay az gx gy gz pitch roll;
+
 function ax = combine(axh, axl)
-    ax = bitshift(axh, 8)+axl;
-    ax = ax - 65536*(bitget(ax, 16) == 1);
+  ax = bitshift(axh, 8) + axl;
+  ax = ax - 65536*(bitget(ax, 16) == 1);
 endfunction
+
 
 function read_accel(axl,axh,ayl,ayh,azl,azh)  
   
   #################################################
-  ####### Write a code here to combine the ########
-  #### HIGH and LOW values from ACCELEROMETER #####
-  #################################################
   global ax ay az;
-  % Code to combine axl and axh
-  ax = combine(axl, axh);
-  ay = combine(ayl, ayh);
-  az = combine(azl, azh);
+  
+  ax = combine(axh, axl) / 16384;;
+  ay = combine(ayh, ayl) / 16384;
+  az = combine(azh, azl) / 16384;
+  #################################################
 
-  lowpassfilter(ax, ay, az, 5);
+
   ####################################################
-  # Call function lowpassfilter(ax,ay,az,f_cut) here #
+  lowpassfilter(ax,ay,az,5);
   ####################################################
 
 endfunction
@@ -32,43 +32,34 @@ endfunction
 function read_gyro(gxl,gxh,gyl,gyh,gzl,gzh)
   
   #################################################
-  ####### Write a code here to combine the ########
-  ###### HIGH and LOW values from GYROSCOPE #######
-  #################################################
   global gx gy gz;
-  gx = combine(gxl, gxh);
-  gy = combine(gyl, gyh);
-  gz = combine(gzl, gzh);
-
-  highpassfilter(gx, gy, gz, 5);
+  
+  gx = combine(gxl, gxh) / 131;
+  gy = combine(gyl, gyh) / 131;
+  gz = combine(gzl, gzh) / 131;
+  #################################################
 
 
   #####################################################
-  # Call function highpassfilter(ax,ay,az,f_cut) here #
+  highpassfilter(gx, gy, gz, 5);
   #####################################################;
 
 endfunction
 
+
+
 function lowpassfilter(ax,ay,az,f_cut)
   dT = 0.01;  #time in seconds
-  Tau= 1/(2*pi*f_cut);
+  Tau = 1 / (2*pi*f_cut);
   alpha = Tau/(Tau+dT);                #do not change this line
   
   ################################################
-  ##############Write your code here##############
+  a = [1, -alpha];
+  b = [1-alpha];
+  ax = filter(b , a, ax);
+  ay = filter(b , a, ay);
+  az = filter(b , a, az);
   ################################################
-  afx = afy = afz = [];
-  afx(1)=(1-alpha)*ax(1);
-  afy(1)=(1-alpha)*ay(1);
-  afz(1)=(1-alpha)*az(1);
-  for n = 2:rows(ax)
-    afx(n) = (1-alpha)*ax(n) + alpha*afx(n-1);
-    afy(n) = (1-alpha)*ay(n) + alpha*afy(n-1);
-    afz(n) = (1-alpha)*az(n) + alpha*afz(n-1);
-  endfor
-  ax=afx;
-  ay=afy;
-  az=afz;
   
 endfunction
 
@@ -76,89 +67,81 @@ endfunction
 
 function highpassfilter(gx,gy,gz,f_cut)
   dT = 0.01;  #time in seconds
-  Tau= 1/(2*pi*f_cut);
+  Tau= 1 / (2*pi*f_cut);
   alpha = Tau/(Tau+dT);                #do not change this line
   
   ################################################
-  ##############Write your code here##############
+  a = [1, alpha-1];
+  b = [1-alpha, alpha-1];
+  gx = filter(b , a, gx);
+  gy = filter(b , a, gy);
+  gz = filter(b , a, gz);
   ################################################
-  gfx = gfy = gfz = [];
-  gfx(1)=(1-alpha)*gx(1);
-  gfy(1)=(1-alpha)*gy(1);
-  gfz(1)=(1-alpha)*gz(1);
-  for n = 2:rows(gx)
-    gfx(n) = (1-alpha)*gfx(n-1) + (1-alpha)*(gx(n)-gx(n-1));
-    gfy(n) = (1-alpha)*gfy(n-1) + (1-alpha)*(gy(n)-gy(n-1));
-    gfz(n) = (1-alpha)*gfz(n-1) + (1-alpha)*(gz(n)-gz(n-1));
-  endfor
-  gx=gfx;
-  gy=gfy;
-  gz=gfz;
   
 endfunction
 
 function comp_filter_pitch(ax,ay,az,gx,gy,gz)
+
   ##############################################
-  ####### Write a code here to calculate  ######
-  ####### PITCH using complementry filter ######
-  ##############################################
-  global pitch;
+  global pitch
   alpha = 0.03;
-  apitch = atan2(ax, sqrt(ay.*ay + az.*az));
-  pitch(1) = (1-alpha)*gx(1)*0.01*pi/180 + alpha*apitch(1);
-  for n = 2:length(ax) 
-    pitch(n) = (1-alpha)*(pitch(n-1) + gx(n)*0.01*pi/180) + alpha*apitch(n);
-  endfor
+  dt = 0.01;
+  
+  apitch = atan2(ax, (ay.^2 + az.^2).^0.5);
+  gpitch =  (dt*pi/180)*gx;
+  x = (1-alpha)*gpitch + alpha*apitch;
+  a = [1, alpha-1];
+  b = [1];
+  pitch = filter(b, a, x);
+  
+  ##############################################
+
 endfunction 
 
 function comp_filter_roll(ax,ay,az,gx,gy,gz)
 
   ##############################################
-  ####### Write a code here to calculate #######
-  ####### ROLL using complementry filter #######
-  ##############################################
-  global roll;
+  global roll
+  dt = 0.01;
   alpha = 0.03;
-  aroll = atan2(ay, sqrt(ax.*ax + az.*az));
-  roll(1) = (1-alpha)*gy(1)*0.01*pi/180 + alpha*aroll(1);
-  for n = 2:length(ax)
-    roll(n) = (1-alpha)*(roll(n-1) + gy(n)*0.01*pi/180) + alpha*aroll(n);
-  endfor
-endfunction
+  
+  aroll = atan2(ay, (ax.^2 + az.^2).^0.5);
+  groll = (dt*pi/180)*gy;
+  x = (1-alpha)*groll + alpha*aroll;
+  a = [1, alpha-1];
+  b = [1];
+  roll = filter(b, a, x);
+  ##############################################
 
-function execute_code()
-  global A ax ay az gx gy gz pitch roll;
+endfunction 
+
+function execute_code
+  global ax ay az gx gy gz pitch roll A;
 
   for n = 1:rows(A)                    #do not change this line
     
     ###############################################
-    ####### Write a code here to calculate  #######
-    ####### PITCH using complementry filter #######
-    ###############################################                  
+    
+    ###############################################
+    
   endfor
-  axl = A(:, 1);
-  axh = A(:, 2);
-  ayl = A(:, 3);
-  ayh = A(:, 4);
-  azl = A(:, 5);
-  azh = A(:, 6);
-  gxl = A(:, 7);
-  gxh = A(:, 8);
-  gyl = A(:, 9);
-  gyh = A(:, 10);
-  gzl = A(:, 11);
-  gzh = A(:, 12);
+  axh = A(:, 1);
+  axl = A(:, 2);
+  ayh = A(:, 3);
+  ayl = A(:, 4);
+  azh = A(:, 5);
+  azl = A(:, 6);
+  gxh = A(:, 7);
+  gxl = A(:, 8);
+  gyh = A(:, 9);
+  gyl = A(:, 10);
+  gzh = A(:, 11);
+  gzl = A(:, 12);
   read_gyro(gxl, gxh, gyl, gyh, gzl, gzh);
   read_accel(axl, axh, ayl, ayh, azl, azh);
   comp_filter_pitch(ax, ay, az, gx, gy, gz);
-  comp_filter_roll(ax, ay, az, gx, gy, gz);\
-
-  % Scaling
-  
-
-
-
-  % csvwrite('output_data.csv',B);        #do not change this line
+  comp_filter_roll(ax, ay, az, gx, gy, gz);
+  %csvwrite('output_data.csv',B);        #do not change this line
 endfunction
 
 
