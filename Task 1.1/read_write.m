@@ -6,15 +6,8 @@ global ax ay az gx gy gz pitch roll;
 ################################################
 
 function ax = combine(axh, axl)
-  ax = zeros(size(axh));
-  for i = 1:length(axl)
-    ax(i) = bitshift(axh(i), 8)+axl(i);
-    sx = bitget(ax(i), 16);
-    if sx == 1
-      ax(i) = bitset(ax(i), 16, 1);
-      ax(i) = -1*int16(bitcmp(ax(i),16))+1;
-    endif
-  endfor
+    ax = bitshift(axh, 8)+axl;
+    ax = ax - 65536*(bitget(ax, 16) == 1);
 endfunction
 
 function read_accel(axl,axh,ayl,ayh,azl,azh)  
