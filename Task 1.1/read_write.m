@@ -49,6 +49,7 @@ endfunction
 
 
 function lowpassfilter(ax,ay,az,f_cut)
+  global ax ay az;
   dT = 0.01;  #time in seconds
   Tau = 1 / (2*pi*f_cut);
   alpha = Tau/(Tau+dT);                #do not change this line
@@ -65,6 +66,7 @@ endfunction
 
 
 function highpassfilter(gx,gy,gz,f_cut)
+  global gx gy gz;
   dT = 0.01;  #time in seconds
   Tau= 1 / (2*pi*f_cut);
   alpha = Tau/(Tau+dT);                #do not change this line
