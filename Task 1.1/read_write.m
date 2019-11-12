@@ -6,9 +6,9 @@ global A = csvread('csv_matter.csv');  #do not change this line
 
 global ax ay az gx gy gz pitch roll;
 
-function ax = combine(axh, axl)
-  ax = bitshift(axh, 8) + axl;
-  ax = ax - 65536*(bitget(ax, 16) == 1);
+function a = combine(ah, al)
+  a = bitshift(ah, 8) + al;
+  a = a - 65536*(bitget(a, 16) == 1);
 endfunction
 
 
@@ -34,9 +34,9 @@ function read_gyro(gxl,gxh,gyl,gyh,gzl,gzh)
   #################################################
   global gx gy gz;
   
-  gx = combine(gxl, gxh) / 131;
-  gy = combine(gyl, gyh) / 131;
-  gz = combine(gzl, gzh) / 131;
+  gx = combine(gxh, gxl) / 131;
+  gy = combine(gyh, gyl) / 131;
+  gz = combine(gzh, gzl) / 131;
   #################################################
 
 
@@ -64,7 +64,6 @@ function lowpassfilter(ax,ay,az,f_cut)
 endfunction
 
 
-
 function highpassfilter(gx,gy,gz,f_cut)
   dT = 0.01;  #time in seconds
   Tau= 1 / (2*pi*f_cut);
@@ -87,8 +86,8 @@ function comp_filter_pitch(ax,ay,az,gx,gy,gz)
   alpha = 0.03;
   dt = 0.01;
   
-  apitch = atan2(ax, (ay.^2 + az.^2).^0.5);
-  gpitch =  (dt*pi/180)*gx;
+  apitch = atan2(ax, (ay.^2 + az.^2).^0.5) * 180/pi ;
+  gpitch =  dt*gx;
   x = (1-alpha)*gpitch + alpha*apitch;
   a = [1, alpha-1];
   b = [1];
@@ -104,27 +103,27 @@ function comp_filter_roll(ax,ay,az,gx,gy,gz)
   global roll
   dt = 0.01;
   alpha = 0.03;
-  
-  aroll = atan2(ay, (ax.^2 + az.^2).^0.5);
-  groll = (dt*pi/180)*gy;
+      
+  aroll = atan2(ay, (ax.^2 + az.^2).^0.5) * 180/pi;
+  groll = dt*gy;
   x = (1-alpha)*groll + alpha*aroll;
   a = [1, alpha-1];
   b = [1];
   roll = filter(b, a, x);
   ##############################################
-
+       
 endfunction 
 
 function execute_code
   global ax ay az gx gy gz pitch roll A;
 
-  for n = 1:rows(A)                    #do not change this line
-    
-    ###############################################
-    
-    ###############################################
-    
-  endfor
+%  for n = 1:rows(A)                    #do not change this line
+%    
+%    ###############################################
+%    
+%    ###############################################
+%   
+%  endfor
   axh = A(:, 1);
   axl = A(:, 2);
   ayh = A(:, 3);
