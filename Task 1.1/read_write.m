@@ -17,7 +17,7 @@ function read_accel(axl,axh,ayl,ayh,azl,azh)
   #################################################
   global ax ay az;
   
-  ax = combine(axh, axl) / 16384;;
+  ax = combine(axh, axl) / 16384;
   ay = combine(ayh, ayl) / 16384;
   az = combine(azh, azl) / 16384;
   #################################################
@@ -45,7 +45,6 @@ function read_gyro(gxl,gxh,gyl,gyh,gzl,gzh)
   #####################################################;
 
 endfunction
-
 
 
 function lowpassfilter(ax,ay,az,f_cut)
@@ -80,25 +79,24 @@ function highpassfilter(gx,gy,gz,f_cut)
   ################################################
   
 endfunction
-
+  
 function comp_filter_pitch(ax,ay,az,gx,gy,gz)
-
+   
   ##############################################
-  global pitch
+  global pitch;
   alpha = 0.03;
   dt = 0.01;
   
-  apitch = atan2(ax, (ay.^2 + az.^2).^0.5) * 180/pi ;
-  gpitch =  dt*gx;
+  apitch = atan(ay ./ abs(az)) * 180/pi ;
+  gpitch =  -dt*gx;
   x = (1-alpha)*gpitch + alpha*apitch;
   a = [1, alpha-1];
   b = [1];
   pitch = filter(b, a, x);
-  
   ##############################################
-
+  
 endfunction 
-
+  
 function comp_filter_roll(ax,ay,az,gx,gy,gz)
 
   ##############################################
@@ -106,8 +104,8 @@ function comp_filter_roll(ax,ay,az,gx,gy,gz)
   dt = 0.01;
   alpha = 0.03;
       
-  aroll = atan2(ay, (ax.^2 + az.^2).^0.5) * 180/pi;
-  groll = dt*gy;
+  aroll = atan(ax ./ abs(az)) * 180/pi;
+  groll = -dt*gy;
   x = (1-alpha)*groll + alpha*aroll;
   a = [1, alpha-1];
   b = [1];
