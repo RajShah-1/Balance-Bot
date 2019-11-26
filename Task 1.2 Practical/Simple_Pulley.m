@@ -12,9 +12,12 @@ pkg load control
 ##*  Version: 1.0.0  
 ##*  Date: November 3, 2019
 ##*
-##*  Team ID :
-##*  Team Leader Name:
-##*  Team Member Name
+##*  Team ID : 1452
+##*  Team Leader Name: Dhruval Anil Javia
+##*  Team Member Name 
+##*   Shah Raj Kalpeshbhai
+##*   Dhruv Ajay Ray
+##*   Shivam Malviya
 ##*    
 ##*  Author: e-Yantra Project, Department of Computer Science
 ##*  and Engineering, Indian Institute of Technology Bombay.
@@ -193,7 +196,7 @@ function simple_pulley_main()
   y0 = [0.5 ; 0];                   ## Initial condtion
   y_setpoint = [0.75; 0];              ## Set Point
   
-##  [t,y] = sim_pulley(m1, m2, g, r, y0);
+##  [t,y] = sim_pulley(m1, m2, g, r, y0)
 ##  [t,y] = pole_place_pulley(m1, m2, g, r, y_setpoint, y0)
   [t,y] = lqr_pulley(m1, m2, g, r, y_setpoint, y0)
   

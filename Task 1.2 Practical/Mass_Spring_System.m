@@ -12,10 +12,12 @@ pkg load control
 ##*  Version: 1.0.0  
 ##*  Date: November 3, 2019
 ##*
-##*  Team ID :
-##*  Team Leader Name:
-##*  Team Member Name
-##*
+##* Team ID : 1452
+##*  Team Leader Name: Dhruval Anil Javia
+##*  Team Member Name 
+##*   Shah Raj Kalpeshbhai
+##*   Dhruv Ajay Ray
+##*   Shivam Malviya
 ##*  
 ##*  Author: e-Yantra Project, Department of Computer Science
 ##*  and Engineering, Indian Institute of Technology Bombay.
@@ -132,7 +134,6 @@ endfunction
 ##          calculated using Pole Placement Technique.
 function [t,y] = pole_place_mass_spring(m, k, y_setpoint, y0)
   [A,B] = mass_spring_AB_matrix(m, k);  ## Initialize A and B matrix 
-  ## !!! ____ Find better value of eigs to get accurate answers
   eigs = [-20, -20];                    ## Initialise desired eigenvalues
   K = place(A, B, eigs);                ## Calculate K matrix for desired eigenvalues
   

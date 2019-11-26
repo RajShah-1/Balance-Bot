@@ -12,10 +12,12 @@ pkg load control
 ##*  Version: 1.0.0  
 ##*  Date: November 3, 2019
 ##*
-##*  Team ID :
-##*  Team Leader Name:
-##*  Team Member Name
-##*
+##*  Team ID : 1452
+##*  Team Leader Name: Dhruval Anil Javia
+##*  Team Member Name 
+##*   Shah Raj Kalpeshbhai
+##*   Dhruv Ajay Ray
+##*   Shivam Malviya
 ##*  
 ##*  Author: e-Yantra Project, Department of Computer Science
 ##*  and Engineering, Indian Institute of Technology Bombay.
@@ -103,11 +105,11 @@ function dy = cart_pendulum_dynamics(y, m, M, L, g,  u)
 
   dy(1,1) = y(2);
   %dy(2,1) = m*g*y(3)/M + u/M;
-  dy(2, 1) = u./(M + m.*sinT.*sinT) + m.*g.*sin(2*y(3))/(2*(M + m.*sinT.*sinT)) - ...
-              m.*L.*y(4).*y(4).*sinT/(M + m.*sinT.*sinT);
+  dy(2,1) = (u - m.*g.*sin(2*y(3))/2 + m.*L.*y(4).*y(4).*sinT)./(M + m.*sinT.*sinT);
   dy(3,1) = y(4);
-  dy(4,1) = (1+m/M)*(g*y(3)/L) + u/(M*L);  
-  %dy(4, 1) = 
+  %dy(4,1) = (1+m/M)*(g*y(3)/L) + u/(M*L);  
+  dy(4,1) = (+dy(2, 1).*cosT - g.*sinT)./L;
+  % disp(u);
 endfunction
 
 ## Function : sim_cart_pendulum()
@@ -144,13 +146,13 @@ endfunction
 ## Purpose: Declare the A and B matrices in this function.
 function [A, B] = cart_pendulum_AB_matrix(m , M, L, g)
   A = [0 1 0 0;
-       0 0 0 0;
+       0 0 -g*m/M 0;
        0 0 0 1;
-       0 0 (1+m/M)*(g/L) 0];
+       0 0 (g+g*m/M)/L 0];
   B = [0;
        1/M;
        0;
-       1/(M*L)];  
+       -1/(M*L)];  
 endfunction
 
 ## Function : pole_place_cart_pendulum()
@@ -172,9 +174,8 @@ endfunction
 ##          calculated using Pole Placement Technique.
 function [t,y] = pole_place_cart_pendulum(m, M, L, g, y_setpoint, y0)
   [A, B] = cart_pendulum_AB_matrix(m, M, L, g);
-  eigs = [-18, -17, -18, -17];         ## Initialise desired eigenvalues
+  eigs = [-4, -4, -2, -1];         ## Initialise desired eigenvalues
   K = place(A, B, eigs);   ## Calculate K matrix for desired eigenvalues
-
   tspan = 0:0.1:10;
   [t,y] = ode45(@(t,y)cart_pendulum_dynamics(y, m, M, L, g, -K*(y-y_setpoint)),tspan,y0);
 endfunction
@@ -198,10 +199,13 @@ endfunction
 ##          calculated using LQR Controller.
 function [t,y] = lqr_cart_pendulum(m, M, L, g, y_setpoint, y0)
   [A,B] = cart_pendulum_AB_matrix(m, M, L, g);        ## Initialize A and B matrix
-  Q = [2 0; 0 3.4];           ## Initialise Q matrix
-  R = 1e-4;                   ## Initialise R 
+  Q = [1 0 0 0;            ## Initialise Q matrix
+       0 2 0 0;
+       0 0 1 0;
+       0 0 0 2];            
+  R = 1e-2;                   ## Initialise R 
   
-  K = lqr(A, B, Q, R)         ## Calculate K matrix from A,B,Q,R matrices
+  K = lqr(A, B, Q, R);       ## Calculate K matrix from A,B,Q,R matrices
   tspan = 0:0.1:10;
   [t,y] = ode45(@(t,y)cart_pendulum_dynamics(y, m, M, L, g, -K*(y-y_setpoint)),tspan,y0);
 endfunction
@@ -216,12 +220,12 @@ function cart_pendulum_main()
   M = 5;
   L = 2;
   g = 9.8;
-  y0 = [-4; 0; pi + 0.8; 0];
+  y0 = [0; 0; pi+0.8; 0];
   y_setpoint = [0; 0; pi; 0];
   
-  [t,y] = sim_cart_pendulum(m, M, L, g, y0)
-##  [t,y] = pole_place_cart_pendulum(m, M, L, g, y_setpoint, y0)
-##  [t,y] = lqr_cart_pendulum(m, M, L, g, y_setpoint, y0);
+[t,y] = sim_cart_pendulum(m, M, L, g, y0)
+##[t,y] = pole_place_cart_pendulum(m, M, L, g, y_setpoint, y0)
+##[t,y] = lqr_cart_pendulum(m, M, L, g, y_setpoint, y0);
   
   for k = 1:length(t) 
     draw_cart_pendulum(y(k, :), m, M, L);  

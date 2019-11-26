@@ -12,10 +12,12 @@ pkg load control
 ##*  Version: 1.0.0  
 ##*  Date: November 3, 2019
 ##*
-##*  Team ID :
-##*  Team Leader Name:
-##*  Team Member Name
-##*
+##*  Team ID : 1452
+##*  Team Leader Name: Dhruval Anil Javia
+##*  Team Member Name 
+##*   Shah Raj Kalpeshbhai
+##*   Dhruv Ajay Ray
+##*   Shivam Malviya
 ##*  
 ##*  Author: e-Yantra Project, Department of Computer Science
 ##*  and Engineering, Indian Institute of Technology Bombay.
@@ -136,7 +138,7 @@ endfunction
 ##          calculated using Pole Placement Technique.
 function [t,y] = pole_place_pendulum(m, g, L, y_setpoint, y0)
   [A,B] = pendulum_AB_matrix(m, g, L);                            ## Initialize A and B matrix
-  eigs = [-1, -2];                             ## Initialise desired eigenvalues
+  eigs = [-3, -4];                             ## Initialise desired eigenvalues
   K = place(A, B, eigs);                           ## Calculate K matrix for desired eigenvalues
   
   tspan = 0:0.1:10;                  ## Initialise time step 
@@ -180,9 +182,9 @@ function simple_pendulum_main()
   y_setpoint = [pi; 0];                ## Set Point 
   y0 = [pi/6 ; 0];                   ## Initial condtion
   
-  [t,y] = sim_pendulum(m,g,L, y0)        ## Test Simple Pendulum
-##  [t,y] = pole_place_pendulum(m,g,L, y_setpoint, y0); ## Test Simple Pendulum with Pole Placement Controller
-##  [t,y] = lqr_pendulum(m,g,L, y_setpoint, y0);        ## Test Simple Pendulum with LQR Controller
+##  [t,y] = sim_pendulum(m,g,L, y0)        ## Test Simple Pendulum
+##  [t,y] = pole_place_pendulum(m,g,L, y_setpoint, y0) ## Test Simple Pendulum with Pole Placement Controller
+  [t,y] = lqr_pendulum(m,g,L, y_setpoint, y0)        ## Test Simple Pendulum with LQR Controller
 
   for k = 1:length(t)
     draw_pendulum(y(k, :), L);  
