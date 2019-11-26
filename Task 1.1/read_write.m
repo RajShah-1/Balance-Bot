@@ -117,13 +117,13 @@ endfunction
 function execute_code
   global ax ay az gx gy gz pitch roll A;
 
-%  for n = 1:rows(A)                    #do not change this line
-%    
-%    ###############################################
-%    
-%    ###############################################
-%   
-%  endfor
+ for n = 1:rows(A)                    #do not change this line
+   
+   ###############################################
+   
+   ###############################################
+  
+ endfor
   axh = A(:, 1);
   axl = A(:, 2);
   ayh = A(:, 3);
