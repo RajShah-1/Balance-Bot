@@ -117,9 +117,12 @@ function dy = complex_pulley_dynamics(y, m1, m2, m3, g, rA, rB, u)
   
   
   dy(1,1) = y(2);
-  dy(2,1) = ((m1-(m2+m3))*g+(u(1)./rA))./m1;
   dy(3,1) = y(4);
+  dy(2,1) = ((m1-(m2+m3))*g+(u(1)./rA))./m1;
   dy(4,1) = ((m2-m3)*g + (u(2)./rB))./(m2+m3);
+
+  dy(4, 1) = ( (u(1)/rA)*(m3 - m2) - (u(2)/rB)*(m1+m2+m3) + g*(m3-m2)*2*(m1+m2) ) / ((m3-m2)^2 - (m3+m2)*(m1+m2+m3));
+  dy(2, 1) = ( u(1)/rA + g*(m1-m2-m3) - dy(4, 1)*(m3-m2) ) / (m1+m2+m3);
 endfunction
 
 ## Function : sim_complex_pulley()
@@ -164,9 +167,9 @@ function [A,B] = complex_pulley_AB_matrix(m1, m2, m3, g, rA, rB)
        0 0 0 1;
        0 0 0 0];
   B = [0 0;
-       1/(m1.*rA) 0;
+       1/(rA*(m1+m2+m3))-(m3-m2)^2/( (rA*((m3-m2)^2 - (m3+m2)*(m1+m2+m3))) * (m1+m2+m3)), (m3-m2)/(rB*((m3-m2)^2 - (m3+m2)*(m1+m2+m3)) );
        0 0;
-       0 1/((m2+m3).*rB)];
+       (m3-m2)/(rA*((m3-m2)^2 - (m3+m2)*(m1+m2+m3))), -(m1+m2+m3)/(rB*((m3-m2)^2 - (m3+m2)*(m1+m2+m3)))];
 endfunction
 
 ## Function : pole_place_complex_pulley()
@@ -190,7 +193,7 @@ endfunction
 ##          calculated using Pole Placement Technique.
 function [t,y] = pole_place_complex_pulley(m1, m2, m3, g, rA, rB, y_setpoint, y0)
   [A, B] = complex_pulley_AB_matrix(m1, m2, m3, g, rA, rB);
-  eigs = [-7, -6, -7, -6];         ## Initialise desired eigenvalues
+  eigs = [-8, -7, -7, -6];         ## Initialise desired eigenvalues
   K = place(A, B, eigs);   ## Calculate K matrix for desired eigenvalues
   
   tspan = 0:0.1:10;                  ## Initialise time step 
