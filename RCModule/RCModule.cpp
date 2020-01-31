@@ -1,53 +1,20 @@
-#define MagF            51                     // electromagnet pin
+#include "RCModule.h"
 
-#define InL1            13                      // motor pin
-#define InL2            9                       // motor pin  
+RCModule:: RCModule(int InL1Val, int InL2Val, int InR1Val, int InR2Val, int MagFVal):InL1(InL1Val), InL2(InL2Val), InR1(InR1Val), InR2(InR2Val), MagF(MagFVal){}
 
-#define InR1            7                       // motor pin
-#define InR2            4                       // motor pin 
+void RCModule::iterate(){
+  bool check = readXBee();
 
-void setup(){
-  // Initialize the Serial Monitor
-  Serial.begin(9600);
-  // Initialize the pin-mode of motor pins 
-  motorInit();
-  // Initialize the pin-mode of electromagnet pin
-  MagInit();
-}
-// data array which stores the data frame received by the receiver Xbee
-unsigned char data[15];
+  getJoystickData();
 
-/**
- * control array stores the direction of the bot
- * control[0]: 1->forward, 0->neutral & -1->backward 
- * control[1]: 1->left, 0->neutral & -1->right
- */
-int control[2];
-
-void loop(){
-  
-  bool check =  readXBee(data); // read the data from the XBee if it is successful check = true else check = false  
-  
-  getJoystickData(control, data); // Process the data-frame received and determine appropriate values for control[0] & control[1]
-  
-  controlMotors(control); // Give command to the motor driver according to the values in control array
-  
-  controlMagnet(data); 
-  
+  controlMotors();
+  controlMagnet();
   if(check) // Debugging message
-    Serial.println("Success");  
-  
-  delay(1000);
+    Serial.println("Success");
 }
 
-/**
- * Function Name: readXBee
- * Functionality: To read the data from the XBee and update values in data array
- * Arguments: unsigned char array data[15]
- * Return Value: bool denoting whether the reading process was successful or not
- * Example: readXBee(data)
- */
-bool readXBee(unsigned char data[15]){
+
+bool RCModule::readXBee(){
   // Init temporary array to store the data frame
   unsigned char tmpData[15], tmpByte;
   int checkSum = 0x83;
@@ -87,14 +54,7 @@ bool readXBee(unsigned char data[15]){
   else return false;
 }
 
-/**
- * Function Name: controlMotors
- * Functionality: To control the motors according to the control array
- * Arguments: int array control[2]
- * Return Value: None
- * Example: controlMotors(control)
- */
-void controlMotors(int control[2]){
+void RCModule::controlMotors(){
   if(control[0] == 1){ // Forward
     motorForwardL();
     motorForwardR();
@@ -117,14 +77,7 @@ void controlMotors(int control[2]){
   }
 }
 
-/**
- * Function Name: controlMagnet
- * Functionality: To control the magnet according to the data array
- * Arguments: unsigned char array data[15]
- * Return Value: None
- * Example: controlMagnet(data)
- */
-void controlMagnet(unsigned char data[15]){
+void RCModule::controlMagnet(){
   // Use bit-masking to get the value of DO3 pin on XBee
   int eMState = data[8] & 8 ;
   if(eMState == 0)
@@ -133,14 +86,7 @@ void controlMagnet(unsigned char data[15]){
     MagDrop();
 }
 
-/**
- * Function Name: getJoystickData
- * Functionality: convert the analog joystick values to control array
- * Arguments: int array control[2] & unsigned char array data[15]
- * Return Value: None
- * Example: getJoystickData(control, data)
- */
-void getJoystickData(int control[2], unsigned char data[15]){
+void RCModule:: getJoystickData(){
   // Calculate the Analog value at AO1 using two bytes data[11] (LSB) and data[12] (MSB)
   int AD1 = data[11]*255+data[12];
   // Limiting AD1
@@ -179,7 +125,7 @@ void getJoystickData(int control[2], unsigned char data[15]){
 // ==================== HELPER FUNCTIONS ===========================
 
 // Initialize the pin-modes of the motor-pins (InL1, InL2, InR1, InR2)
-void motorInit(){
+void RCModule:: motorInit(){
     pinMode(InL1, OUTPUT);
     pinMode(InL2, OUTPUT);
     
@@ -188,53 +134,53 @@ void motorInit(){
 }
 
 // Set the left motor to move forward
-void motorForwardL(){
+void RCModule::motorForwardL(){
     digitalWrite(InL1, LOW);
     digitalWrite(InL2, HIGH);
 }
 
 // Set the right motor to move forward
-void motorForwardR(){
+void RCModule::motorForwardR(){
     digitalWrite(InR1, LOW);
     digitalWrite(InR2, HIGH);
 }
 
 // Set the left motor to move backward
-void motorBackwardL(){
+void RCModule::motorBackwardL(){
     digitalWrite(InL1, HIGH);
     digitalWrite(InL2, LOW);
 }
 
 // Set the right motor to move backward
-void motorBackwardR(){
+void RCModule::motorBackwardR(){
     digitalWrite(InR1, HIGH);
     digitalWrite(InR2, LOW);
 }
 
 // Stop left motor
-void motorStopL(){
+void RCModule::motorStopL(){
     digitalWrite(InL1, LOW);
     digitalWrite(InL2, LOW);
 }
 
 // Stop right motor
-void motorStopR(){
+void RCModule::motorStopR(){
     digitalWrite(InR1, LOW);
     digitalWrite(InR2, LOW);
 }
 
 // Initialize the pin-mode of electromagnet pin MagF and initialize it to LOW(0V)
-void MagInit(){
+void RCModule::MagInit(){
   pinMode(MagF, OUTPUT);
   digitalWrite(MagF, LOW);
 }
 
 // switch on the electromagnet
-void MagPick(void)  {
+void RCModule::MagPick(void)  {
   digitalWrite(MagF, HIGH);
 }
 
 // switch off the electromagnet
-void MagDrop(void)  {
+void RCModule::MagDrop(void)  {
   digitalWrite(MagF, LOW);
 }
