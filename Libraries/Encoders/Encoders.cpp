@@ -21,11 +21,11 @@ void Encoders::init() {
 	lastStateB = digitalRead(B);    
 }
 
-float Encoders::getPhi() {
+float Encoders::findPhi() {
 	return (2 * M_PI * rotation)/RESOLUTION;
 }
 
-float Encoders::getPhiDot() {
+float Encoders::findPhiDot() {
 	int samplingTime = 30; 
 	int rotation1, rotation2;
 	rotation1 = rotation;
@@ -33,9 +33,9 @@ float Encoders::getPhiDot() {
 	rotation2 = rotation;
 	return (2000 * M_PI * (rotation2 - rotation1)) / (RESOLUTION * samplingTime);
 }
-float Encoders::getX() {
-	return getPhi() * RADIUS;
+float Encoders::findX() {
+	return findPhi() * RADIUS;
 }
-float Encoders::getXDot() {
-	return getPhiDot() * RADIUS;
+float Encoders::findXDot() {
+	return findPhiDot() * RADIUS;
 }
