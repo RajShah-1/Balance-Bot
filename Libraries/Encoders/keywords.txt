@@ -15,7 +15,6 @@ init	KEYWORD2
 getPhi	KEYWORD2
 getPhiDot	KEYWORD2
 getX	KEYWORD2
-iterate	KEYWORD2
 getXDot	KEYWORD2
 
 #######################################
