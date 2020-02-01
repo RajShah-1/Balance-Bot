@@ -42,7 +42,15 @@ void Motor::reverse(int speed) {
 }
 
 void Motor::generate(float torque) {
-    return RESISTANCE * torque / (MOTOR_CONSTANT * GEAR_RATIO) + encoder.phiDot() * MOTOR_CONSTANT;
+    int volatge;
+    voltage = RESISTANCE * torque / (MOTOR_CONSTANT * GEAR_RATIO) + encoder.getPhiDot() * MOTOR_CONSTANT;
+    voltage = volatge * 1023 / 12;
+    if (voltage > 0) {
+        forward(voltage);
+    }
+    else {
+        reverse(-volatge);
+    }
 }
 
 void rightEncoderInterruptA() { 
