@@ -28,7 +28,7 @@ pkg load control
 ##*        http://creativecommons.org/licenses/by-nc-sa/4.0/legalcode 
 ##*     
 ##*
-##*  This software is made available on an ìAS IS WHERE IS BASISî. 
+##*  This software is made available on an ‚ÄúAS IS WHERE IS BASIS‚Äù. 
 ##*  Licensee/end user indemnifies and will keep e-Yantra indemnified from
 ##*  any and all claim(s) that emanate from the use of the Software or 
 ##*  breach of the terms of this agreement.
@@ -106,11 +106,11 @@ function dy = cart_pendulum_dynamics(y, m, M, L, Iw, Ib, r,  g,  u)
   k = (m*m*L*L)/(m*L*L + Ib);
   
   dy(1,1) = y(2);
-  dy(2,1) = (1./(m + 2.*M + 2.*Iw./(r.*r) - k.*cosT.*cosT)).*(-k.*g.*cosT.*sinT + m.*L.*y(4).*y(4).*sinT + (1./r - (k.*cosT)./(m.*L)).*u);
+  dy(2,1) = (1./(m + 2.*M + 2.*Iw./(r.*r) - k.*cosT.*cosT)).*(-k.*g.*cosT.*sinT + m.*L.*y(4).*y(4).*sinT + (1./r + (k.*cosT)./(m.*L)).*u);
   dy(3,1) = y(4);
-  dy(4,1) = (m.*g.*L.*sinT - m.*L.*dy(2,1).*cosT)./(m.*L.*L + Ib);
+  dy(4,1) = (m.*g.*L.*sinT - m.*L.*dy(2,1).*cosT - u)./(m.*L.*L + Ib);
   
-  #theta changed to -theta 
+  #theta changed to pi-theta 
 endfunction
 
 ## Function : sim_cart_pendulum()
@@ -154,9 +154,9 @@ function [A, B] = cart_pendulum_AB_matrix(m , M, L, Iw, Ib, r, g)
        0 0 0 1; 
        0 0 (k*g*(m + 2*M + 2*Iw/(r*r)))/(m*L*(m + 2*M + 2*Iw/(r*r) - k)) 0];
   B = [0; 
-       (1/r - k/(m*L))/(m + 2*M + 2*Iw/(r*r) - k);
+       (1/r + k/(m*L))/(m + 2*M + 2*Iw/(r*r) - k);
        0;
-       -(k/(m*L))*(1/r - k/(m*L))*(1/(m + 2*M + 2*Iw/(r*r) - k))];  
+       (-k/(m*m*L*L))-(k/(m*L))*(1/r + k/(m*L))*(1/(m + 2*M + 2*Iw/(r*r) - k))];  
 endfunction
 
 ## Function : pole_place_cart_pendulum()
@@ -178,8 +178,8 @@ endfunction
 ##          calculated using Pole Placement Technique.
 function [t,y] = pole_place_cart_pendulum(m, M, L, Iw, Ib, r, g, y_setpoint, y0)
   [A, B] = cart_pendulum_AB_matrix(m, M, L, Iw, Ib, r, g);
-  eigs = [-4, -8, -2, -1];         ## Initialise desired eigenvalues
-  K = place(A, B, eigs);   ## Calculate K matrix for desired eigenvalues
+  eigs = [-231.7896, -1.0011, -1.6297, -1.6297];         ## Initialise desired eigenvalues
+  K = place(A, B, eigs)   ## Calculate K matrix for desired eigenvalues
   tspan = 0:0.1:10;
   [t,y] = ode45(@(t,y)cart_pendulum_dynamics(y, m, M, L, Iw, Ib, r, g, -K*(y-y_setpoint)),tspan,y0);
 endfunction
@@ -203,11 +203,11 @@ endfunction
 ##          calculated using LQR Controller.
 function [t,y] = lqr_cart_pendulum(m, M, L, Iw, Ib, r, g, y_setpoint, y0)
   [A,B] = cart_pendulum_AB_matrix(m, M, L, Iw, Ib, r, g);   ## Initialize A and B matrix
-  Q = [1 0 0 0;            ## Initialise Q matrix
-       0 5 0 0;
+  Q = [5 0 0 0;            ## Initialise Q matrix
+       0 10 0 0;
        0 0 1 0;
-       0 0 0 8];            
-  R = 10;                   ## Initialise R 
+       0 0 0 10];            
+  R = 1;                   ## Initialise R 
   
   K = lqr(A, B, Q, R);  ## Calculate K matrix from A,B,Q,R matrices
   disp(K);
@@ -221,18 +221,18 @@ endfunction
 ##          respective functions and observing the behavior of the system. Constant
 ##          parameters like mass of cart, mass of pendulum bob etc are declared here.
 function cart_pendulum_main()
-  m = 1035;
-  M = 66;
-  L = 7.10;
-  Iw = 133.85;
-  Ib = 13302.30;
-  r = 3.3;
-  g = 980;
+  m = 1035*1e-3;
+  M = 66*1e-3;
+  L = 7.10*1e-2;
+  Iw = 133.85*1e-7;
+  Ib = 65476.65*1e-7;
+  r = 3.3*1e-2;
+  g = 9.80;
   y0 = [0; 0; pi + 0.5; 0];
   y_setpoint = [0; 0; pi; 0];
 ##[t,y] = sim_cart_pendulum(m, M, L, Iw, Ib, r, g, y0);
-[t,y] = pole_place_cart_pendulum(m, M, L, Iw, Ib, r, g, y_setpoint, y0)
-##[t,y] = lqr_cart_pendulum(m, M, L, Iw, Ib, r, g, y_setpoint, y0)
+##[t,y] = pole_place_cart_pendulum(m, M, L, Iw, Ib, r, g, y_setpoint, y0)
+[t,y] = lqr_cart_pendulum(m, M, L, Iw, Ib, r, g, y_setpoint, y0)
   for k = 1:length(t) 
     draw_cart_pendulum(y(k, :), 1, 5, 2);  
   endfor
