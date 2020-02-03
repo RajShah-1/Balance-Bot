@@ -22,10 +22,10 @@ class Encoders {
     public:
         Encoders(byte A=0, byte B=0);
         void init();
-        float getPhi();
-        float getPhiDot();
-        float getX();
-        float getXDot();
+        float findPhi();
+        float findPhiDot();
+        float findX();
+        float findXDot();
 };
 
 #endif
