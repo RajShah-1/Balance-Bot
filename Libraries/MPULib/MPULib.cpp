@@ -1,6 +1,6 @@
 #include "MPULib.h"
 
-MPULib::MPULib(MPU6050& mpuRef, const byte sensorInterruptPinVal, 
+MPULib::MPULib(MPU6050 mpuRef, const byte sensorInterruptPinVal, 
 double fCutVal = 5.0, double alphaVal = 0.02): mpu(mpuRef), sensorInterruptPin(sensorInterruptPinVal),
 fCut(fCutVal), alpha(alphaVal) {	
 	Tau = 1/(2*PI*fCut);
@@ -27,12 +27,13 @@ void MPULib::readMPUData(void){
 	pitchRate = (pitch-pitchPrev)/dT;
 }
 
-void MPULibISR(void){
-  isMPUReady = true;
+void sensorISR(void){
+	// isMPUReady = true;
+  Serial.print("");
 }
 
-double MPULib::getTheta(void){ return pitch; }
-double MPULib::getThetaDot(void){ return pitchRate; }
+// double MPULib::getTheta(void){ return pitch; }
+// double MPULib::getThetaDot(void){ return pitchRate; }
 void MPULib::printStates(void) {
   Serial.print("Theta: "); Serial.println(pitch);
   Serial.print(" ThetaDot: "); Serial.println(pitchRate);
@@ -84,7 +85,7 @@ void MPULib::initMPU(void){
     Serial.print(F("Enabling interrupt detection (Arduino external interrupt "));
     Serial.print(digitalPinToInterrupt(sensorInterruptPin));
     Serial.println(F(")..."));
-    attachInterrupt(digitalPinToInterrupt(sensorInterruptPin), MPULibISR, RISING);
+    attachInterrupt(digitalPinToInterrupt(sensorInterruptPin), sensorISR, RISING);
     int mpuIntStatus = mpu.getIntStatus();
 
     // set our DMP Ready flag so the main loop() function knows it's okay to use it

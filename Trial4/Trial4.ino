@@ -1,9 +1,13 @@
 #include <MPULib.h>
 
-MPU6050 mpu;
-MPULib sensor(mpu, (byte)19);
+volatile bool isMPUReady = false;
+
+MPU6050 myMPU;
+const byte sensorInterrupt = 19;
+MPULib sensor(myMPU, sensorInterrupt);
 
 void setup() {
+  Serial.begin(115200);
   // put your setup code here, to run once:
   sensor.initMPU();
   
