@@ -1,38 +1,38 @@
+/**
+ *	Written by: Raj Shah 
+ **/
+
 #ifndef _MPULib_h_
 #define _MPULib_h_
 
 #include "Arduino.h"
 #include "I2Cdev.h"
-#include "MPU6050.h"
+#include "MPU6050_6Axis_MotionApps20.h"
 #include "Wire.h"
 
+volatile bool isMPUReady = false;
 
-class MPULib
-{
+class MPULib{
 public:
-	MPULib(double fCut=5.0);
-
-	void init(int xGyOffset=0, int yGyOffset=0, int zGyOffset=0, 
-		int xAccOffset=0, int yAccOffset=0, int zAccOffset=0);
-	void propagateArrays(int ax, int ay, int az, int gx, int gy, int gz);
-	double getPitch(void);
-	double getRoll(void);
+	MPULib(MPU6050& mpuRef, const byte sensorInterruptPinVal, 
+		double fCutVal = 5.0, double alphaVal = 0.02);
+	void initMPU(void);
+	void readMPUData(void);
 	void iterate(void);
-	void printRollPitch(void);
-
+	double getTheta(void);
+	double getThetaDot(void);
+	void printStates(void);
 private:
-	MPU6050 accGyro;
+	MPU6050 mpu;
 	int16_t ax, ay, az;
 	int16_t gx, gy, gz;
-	double fCut = 5.0;
-	int accData[3], gyData[3], gyDataPrev[3];
-	double accFData[3], gyFData[3];
-	double pitch, roll;
-
-	void lowPassFilter(void);
-	void highPassFilter(void);
-	void compFilterPitch(void);
-	void compFilterRoll(void);
+	unsigned long timeStamp;
+	double accFx, accFy, accFz, gyFx, accP, gyP, gxVal, gxPrev;
+	double dT, alphaLPF, alphaHPF, Tau;
+	double pitch, pitchRate, pitchPrev;
+	const double fCut = 5.0;
+	const double alpha = 0.02;
+	const byte sensorInterruptPin;
 };
 
 #endif

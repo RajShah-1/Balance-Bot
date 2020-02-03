@@ -8,13 +8,12 @@ MPU6050 mpu;
 #define INTERRUPT_PIN 19 // use pin 2 on Arduino Uno & most boards
 
 const double F_CUT = 5.0;
-const double alpha = 2;
+const double alpha = 0.02;
 
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
-int16_t gxPrev;
 unsigned long timeStamp;
-double accFx, accFy, accFz, gyFx, accP;
+double accFx, accFy, accFz, gyFx, accP, gyP, gxVal, gxPrev;
 double dT, alphaLPF, alphaHPF, Tau, pitch, pitchRate, pitchPrev;
 
 volatile bool isMPUReady = false;
@@ -22,21 +21,41 @@ volatile bool isMPUReady = false;
 void readMPUData(MPU6050 mpu){
     dT = (double)(micros()-timeStamp)/1e6;
     timeStamp = micros();
-    gxPrev = gx;
+    gxPrev = gxVal;
     mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-    gx = gx/131;
+    gxVal = (double)gx/131.0;
     alphaHPF = alphaLPF = Tau/(Tau+dT);
-    accFx = (1-alphaLPF)*ax+alphaLPF*accFx;
-    accFy = (1-alphaLPF)*ay+alphaLPF*accFy;
-    accFz = (1-alphaLPF)*az+alphaLPF*accFz;
-    gyFx = (1-alphaHPF)*gyFx+(1-alphaHPF)*(gx-gxPrev);   
-    accP = atan2(accFx, sqrt(accFy*accFy + accFz*accFz))*180/PI;
-    pitchPrev = pitch;
-    Serial.println("DATA::___________");
-    Serial.print("gyroPitch: "); Serial.print(pitch+gyFx*dT);
-    Serial.print("accPitch: "); Serial.print(accP);
-    pitch = (1-alpha)*(pitch+gyFx*dT)+alpha*accP;
-    pitchRate = (pitch-pitchPrev)/dT;
+    gyFx = (1-alphaHPF)*(gxVal-gxPrev)+(1-alphaHPF)*gyFx;
+
+//    Serial.print("dT: ");
+//    Serial.print(dT);
+//    Serial.print(" gyFx: ");
+//    Serial.print(gyFx);
+//    Serial.print(" gxPrev: ");
+//    Serial.print(gxPrev);
+//    Serial.print(" gxVal: ");
+//    Serial.println(gxVal);
+    
+    accFx = alphaLPF*accFx+(1-alphaLPF)*ax;
+    accFy = alphaLPF*accFy+(1-alphaLPF)*ay;
+    accFz = alphaLPF*accFz+(1-alphaLPF)*az;
+    accP = atan(accFy/abs(accFz))*180/PI;
+    gyP = -dT*gyFx;
+//    Serial.print("accP: ");
+//    Serial.println(accP);
+//    Serial.print("gyII: ");
+//    Serial.println(gyP+pitch);
+//    Serial.print(" gyP: ");
+//    Serial.println(gyP);
+    double pitchPrev = pitch;
+    pitch = (1-alpha)*(gyP+pitch)+alpha*accP;
+    Serial.print(pitch);Serial.print(" = ");
+    Serial.print(1-alpha);Serial.print("*(");
+    Serial.print(gyP);Serial.print(" + ");
+    Serial.print(pitch);Serial.print(") + ");
+    Serial.print(alpha);Serial.print(" * ");
+    Serial.println(accP);
+    Serial.println();
 }
 
 void MPULibISR(void){
@@ -68,11 +87,13 @@ void setup(){
   int devStatus = mpu.dmpInitialize();
 
   // supply your own gyro offsets here, scaled for min sensitivity
-  mpu.setXGyroOffset(220);
-  mpu.setYGyroOffset(76);
-  mpu.setZGyroOffset(-85);
-  mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
-
+  mpu.setXGyroOffset(-901);
+  mpu.setYGyroOffset(44);
+  mpu.setZGyroOffset(19);
+  
+  mpu.setXAccelOffset(-3991);
+  mpu.setYAccelOffset(-1309);
+  mpu.setZAccelOffset(4911);
   // make sure it worked (returns 0 if so)
   if (devStatus == 0){
     // Calibration Time: generate offsets and calibrate our MPU6050
@@ -103,6 +124,8 @@ void setup(){
     Serial.print(devStatus);
     Serial.println(F(")"));
   }
+  Tau = 1/(2*PI*F_CUT);
+  accP = gyP = pitch = accFx = accFy = accFz = gxPrev = gyFx = 0;
 }
 
 void loop(){

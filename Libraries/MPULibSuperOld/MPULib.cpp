@@ -1,52 +1,54 @@
-#include "MPULib.h"
+#include "I2Cdev.h"
 
-MPULib::MPULib(MPU6050& mpuRef, const byte sensorInterruptPinVal, 
-double fCutVal = 5.0, double alphaVal = 0.02): mpu(mpuRef), sensorInterruptPin(sensorInterruptPinVal),
-fCut(fCutVal), alpha(alphaVal) {	
-	Tau = 1/(2*PI*fCut);
-  	accP = gyP = pitch = accFx = accFy = accFz = gxPrev = gyFx = 0;
-}
+#include "MPU6050_6Axis_MotionApps20.h"
+#include "Wire.h"
+
+MPU6050 mpu;
+
+#define INTERRUPT_PIN 19 // use pin 2 on Arduino Uno & most boards
 
 
-void MPULib::readMPUData(void){
+const byte sensorInterrupt = 19;
+const double F_CUT = 5.0;
+const double alpha = 0.2;
+
+int16_t ax, ay, az;
+int16_t gx, gy, gz;
+int16_t gxPrev;
+unsigned long timeStamp;
+double accFx, accFy, accFz, gyFx, accP;
+double dT, alphaF, Tau, pitch, pitchRate, pitchPrev;
+
+volatile bool isMPUReady = false;
+
+void readMPUData(void){
     dT = (double)(micros()-timeStamp)/1e6;
     timeStamp = micros();
-    gxPrev = gxVal;
     mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-    gxVal = (double)gx/131.0;
-    alphaHPF = alphaLPF = Tau/(Tau+dT);
-    gyFx = (1-alphaHPF)*(gxVal-gxPrev)+(1-alphaHPF)*gyFx;
-    
-    accFx = alphaLPF*accFx+(1-alphaLPF)*ax;
-    accFy = alphaLPF*accFy+(1-alphaLPF)*ay;
-    accFz = alphaLPF*accFz+(1-alphaLPF)*az;
-    accP = atan(accFy/abs(accFz))*180/PI;
-    gyP = -dT*gyFx;
+    alphaF = Tau/(Tau+dT);
+    accFx = (1-alphaF)*ax+alphaF*accFx;
+    accFy = (1-alphaF)*ay+alphaF*accFy;
+    accFz = (1-alphaF)*az+alphaF*accFz;
+    gyFx = (1-alphaF)*gyFx+(1-alphaF)*(gx-gxPrev);   
+    accP = atan2(accFx, sqrt(accFy*accFy + accFz*accFz));
     pitchPrev = pitch;
-	pitch = (1-alpha)*(gyP+pitch)+alpha*accP;
-	pitchRate = (pitch-pitchPrev)/dT;
+    pitch = (1-alpha)*(pitch+gyFx*dT)+alpha*accP;
+    pitchRate = (pitch-pitchPrev)/dT;
 }
 
 void MPULibISR(void){
   isMPUReady = true;
 }
-
-double MPULib::getTheta(void){ return pitch; }
-double MPULib::getThetaDot(void){ return pitchRate; }
-void MPULib::printStates(void) {
-  Serial.print("Theta: "); Serial.println(pitch);
-  Serial.print(" ThetaDot: "); Serial.println(pitchRate);
-}
-
-void MPULib::initMPU(void){
+void setup(){
   Wire.begin();
   Wire.setClock(400000); // 400kHz I2C clock. Comment this line if having compilation difficulties
 
+  Serial.begin(115200);
   while (!Serial); // wait for Leonardo enumeration, others continue immediately
 
   Serial.println(F("Initializing I2C devices..."));
   mpu.initialize();
-  pinMode(sensorInterruptPin, INPUT);
+  pinMode(INTERRUPT_PIN, INPUT);
 
   // verify connection
   Serial.println(F("Testing device connections..."));
@@ -63,13 +65,11 @@ void MPULib::initMPU(void){
   int devStatus = mpu.dmpInitialize();
 
   // supply your own gyro offsets here, scaled for min sensitivity
-  mpu.setXGyroOffset(-901);
-  mpu.setYGyroOffset(44);
-  mpu.setZGyroOffset(19);
-  
-  mpu.setXAccelOffset(-3991);
-  mpu.setYAccelOffset(-1309);
-  mpu.setZAccelOffset(4911);
+  mpu.setXGyroOffset(220);
+  mpu.setYGyroOffset(76);
+  mpu.setZGyroOffset(-85);
+  mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
+
   // make sure it worked (returns 0 if so)
   if (devStatus == 0){
     // Calibration Time: generate offsets and calibrate our MPU6050
@@ -82,15 +82,16 @@ void MPULib::initMPU(void){
 
     // enable Arduino interrupt detection
     Serial.print(F("Enabling interrupt detection (Arduino external interrupt "));
-    Serial.print(digitalPinToInterrupt(sensorInterruptPin));
+    Serial.print(digitalPinToInterrupt(INTERRUPT_PIN));
     Serial.println(F(")..."));
-    attachInterrupt(digitalPinToInterrupt(sensorInterruptPin), MPULibISR, RISING);
+    attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), MPULibISR, RISING);
     int mpuIntStatus = mpu.getIntStatus();
 
     // set our DMP Ready flag so the main loop() function knows it's okay to use it
     Serial.println(F("DMP ready! Waiting for first interrupt..."));
   }
-  else{
+  else
+  {
     // ERROR!
     // 1 = initial memory load failed
     // 2 = DMP configuration updates failed
@@ -101,9 +102,10 @@ void MPULib::initMPU(void){
   }
 }
 
-void MPULib::iterate(void){
+void loop(){
   if(isMPUReady){
-    readMPUData();
+    readMPUData(mpu);
+    Serial.println(pitch);
     isMPUReady = false;
   }
 }

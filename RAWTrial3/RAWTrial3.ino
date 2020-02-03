@@ -26,6 +26,14 @@ void setup() {
     // verify connection
     Serial.println("Testing device connections...");
     Serial.println(accelgyro.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
+
+    accelgyro.setXGyroOffset(-901);
+    accelgyro.setYGyroOffset(44);
+    accelgyro.setZGyroOffset(19);
+  
+    accelgyro.setXAccelOffset(-3991);
+    accelgyro.setYAccelOffset(-1309);
+    accelgyro.setZAccelOffset(4911);
     timeStamp=micros();
 }
 
@@ -36,10 +44,10 @@ void loop() {
     accP = atan(accY/abs(accZ))*180/PI;
     dT = micros()-timeStamp;
     timeStamp = micros();
-    gyP += gx*dT/1e6;
+    gyP += gyX*dT/1e6;
     Serial.print("GY: ");
     Serial.println(gyP);
     Serial.print("Acc: ");
     Serial.println(accP);
-    delay(1); 
+//    delay(1); 
 }
