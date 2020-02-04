@@ -54,23 +54,24 @@ void Motor::generate(double torque) {
 }
 
 void leftEncoderInterruptA() { 
+    leftMotor.encoder.lastStateA = !leftMotor.encoder.lastStateA;
+    Serial.print("Hello");
     if (leftMotor.encoder.lastStateA != digitalRead(leftMotor.encoder.B)) {
-        leftMotor.encoder.rotation--;
+        leftMotor.encoder.rotation++;
     } 
     else {
-        leftMotor.encoder.rotation++;  
+        leftMotor.encoder.rotation--;  
     }
-    leftMotor.encoder.lastStateA = !leftMotor.encoder.lastStateA;
 }
 
 void rightEncoderInterruptA() { 
+    rightMotor.encoder.lastStateA = !rightMotor.encoder.lastStateA;
     if (rightMotor.encoder.lastStateA != digitalRead(rightMotor.encoder.B)) {
-        rightMotor.encoder.rotation++;
+        rightMotor.encoder.rotation--;
     } 
     else {
-        rightMotor.encoder.rotation--;  
-    }
-    rightMotor.encoder.lastStateA = !rightMotor.encoder.lastStateA; 
+        rightMotor.encoder.rotation++;  
+    } 
 }
 
 void attachMotorInterrupts() {

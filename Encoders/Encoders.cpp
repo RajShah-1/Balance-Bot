@@ -13,10 +13,11 @@ Encoders::Encoders(byte A=0, byte B=0) {
 }
 
 void Encoders::init() {
-	pinMode(A, OUTPUT);
-	pinMode(B, OUTPUT);
+	pinMode(A, INPUT);
+	pinMode(B, INPUT);
 
 	rotation = 0;
+	timeStamp = ((double) micros()) / 1e6;
 	lastStateA = digitalRead(A);
 }
 
@@ -24,13 +25,14 @@ double Encoders::getPhi() {
 	return (2 * M_PI * rotation)/RESOLUTION;
 }
 
-double Encoders::getPhiDot() {
-	int samplingTime = 30; 
-	int rotation1, rotation2;
-	rotation1 = rotation;
-	delay(samplingTime);
-	rotation2 = rotation;
-	return (2000 * M_PI * (rotation2 - rotation1)) / (RESOLUTION * samplingTime);
+double Encoders::getPhiDot() { 
+	int rotationPrev, rotationCurr;
+	unsigned long currentTime;
+	rotationCurr = rotation;
+	currentTime = ((double) micros()) / 1e6;
+	return (2000 * M_PI * (rotationCurr - rotationPrev)) / (RESOLUTION * (currentTime - timeStamp));
+	timeStamp = currentTime;
+	rotationPrev = rotationCurr;
 }
 
 double Encoders::getX() {

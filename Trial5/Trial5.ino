@@ -1,14 +1,30 @@
 #include "I2Cdev.h"
-
 #include "MPU6050_6Axis_MotionApps20.h"
 #include "Wire.h"
-
-MPU6050 mpu;
+#include <Motor.h>
 
 #define MPUInterruptPIN 19 // use pin 2 on Arduino Uno & most boards
 
+const byte lM1 = 22;  //M1 - OUT1 - IN1 - 22
+const byte lM2 = 23;  //M2 - OUT2 - IN2 - 23
+const byte lME = A0;  //ENA - A0
+const byte lMA = 18;  //A - 18
+const byte lMB = 17;  //B - 17
+
+const byte rM1 = 30;  //M2 - OUT4 - IN4 - 30
+const byte rM2 = 31;  //M1 - OUT3 - IN3 - 31
+const byte rME = A1;  //ENB - A1
+const byte rMA = 3;   //A - 2
+const byte rMB = 4;   //B - 3
+
 const double F_CUT = 5.0;
-const double alpha = 0.02;
+const double alpha = 0.05;
+double K[] = {-1, -1.5816, -5.4143, -1.2476};
+
+MPU6050 mpu;
+
+Motor leftMotor(lM1, lM2, lME, lMA, lMB);
+Motor rightMotor(rM1, rM2, rME, rMA, rMB);
 
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
@@ -30,17 +46,13 @@ void readMPUData(MPU6050 mpu){
     accFx = alphaLPF*accFx+(1-alphaLPF)*ax;
     accFy = alphaLPF*accFy+(1-alphaLPF)*ay;
     accFz = alphaLPF*accFz+(1-alphaLPF)*az;
-    accP = atan(accFy/abs(accFz))*180/PI;
-    gyP = -dT*gyFx;
+    accP = -atan(accFy/abs(accFz))*180/PI;
+    gyP = dT*gyFx;
 
     pitchPrev = pitch;
     pitch = (1-alpha)*(gyP+pitch)+alpha*accP;
+//    pitch = -pitch;
     pitchRate = (pitch-pitchPrev)/dT;
-    
-    Serial.print("Pitch: ");
-    Serial.println(pitch);
-    Serial.print(" PitchRate: ");
-    Serial.println(pitchRate);
 }
 
 void MPULibISR(void){
@@ -49,7 +61,7 @@ void MPULibISR(void){
 
 void setup(){
   Serial.begin(115200);
-  initMPUSensor();
+  initAll();
 }
 
 
@@ -113,4 +125,40 @@ void loop(){
     readMPUData(mpu);
     isMPUReady = false;
   }
+  Serial.print("leftRotation ");
+  Serial.println(leftMotor.encoder.rotation);
+  Serial.print("rightRotation ");
+  Serial.println(rightMotor.encoder.rotation);
+  Serial.print("xDot = ");
+  Serial.println(xDot()*100);
+//  Serial.print("pitch = ");
+//  Serial.println(pitch);
+//  Serial.print("pitchDot = ");
+//  Serial.println(pitchRate);
+//    Serial.println("Torque = ");
+//    Serial.print(lqr());
+
+}
+
+
+void initAll() {
+  Serial.begin(115200);
+  attachMotorInterrupts();
+  initMPUSensor();
+}
+
+double x() {
+  return (leftMotor.encoder.getX() + rightMotor.encoder.getX()) / 2;
+}
+
+double xDot() {
+  return (leftMotor.encoder.getXDot() + rightMotor.encoder.getXDot()) / 2;
+}
+
+double lqr() {
+  double torque;
+  torque = -(K[0]*x() + K[1]*xDot() + K[2]*pitch + K[3]*pitchRate) ;
+  return torque;
+//  leftMotor.generate(torque);
+//  rightMotor.generate(torque);
 }
