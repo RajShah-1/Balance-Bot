@@ -1,30 +1,14 @@
 #include "I2Cdev.h"
+
 #include "MPU6050_6Axis_MotionApps20.h"
 #include "Wire.h"
-#include <Motor.h>
-
-#define MPUInterruptPIN 19 // use pin 2 on Arduino Uno & most boards
-
-const byte lM1 = 22;  //M1 - OUT1 - IN1 - 22
-const byte lM2 = 23;  //M2 - OUT2 - IN2 - 23
-const byte lME = A0;  //ENA - A0
-const byte lMA = 18;  //A - 18
-const byte lMB = 17;  //B - 17
-
-const byte rM1 = 30;  //M2 - OUT4 - IN4 - 30
-const byte rM2 = 31;  //M1 - OUT3 - IN3 - 31
-const byte rME = A1;  //ENB - A1
-const byte rMA = 3;   //A - 2
-const byte rMB = 4;   //B - 3
-
-const double F_CUT = 5.0;
-const double alpha = 0.05;
-double K[] = {-1, -1.5816, -5.4143, -1.2476};
 
 MPU6050 mpu;
 
-Motor leftMotor(lM1, lM2, lME, lMA, lMB);
-Motor rightMotor(rM1, rM2, rME, rMA, rMB);
+#define MPUInterruptPIN 19 // use pin 2 on Arduino Uno & most boards
+
+const double F_CUT = 5.0;
+const double alpha = 0.02;
 
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
@@ -42,17 +26,41 @@ void readMPUData(MPU6050 mpu){
     gxVal = (double)gx/131.0;
     alphaHPF = alphaLPF = Tau/(Tau+dT);
     gyFx = (1-alphaHPF)*(gxVal-gxPrev)+(1-alphaHPF)*gyFx;
+
+//    Serial.print("dT: ");
+//    Serial.print(dT);
+//    Serial.print(" gyFx: ");
+//    Serial.print(gyFx);
+//    Serial.print(" gxPrev: ");
+//    Serial.print(gxPrev);
+//    Serial.print(" gxVal: ");
+//    Serial.println(gxVal);
     
     accFx = alphaLPF*accFx+(1-alphaLPF)*ax;
     accFy = alphaLPF*accFy+(1-alphaLPF)*ay;
     accFz = alphaLPF*accFz+(1-alphaLPF)*az;
-    accP = -atan(accFy/abs(accFz))*180/PI;
-    gyP = dT*gyFx;
-
+    accP = atan(accFy/abs(accFz))*180/PI;
+    gyP = -dT*gyFx;
+//    Serial.print("accP: ");
+//    Serial.println(accP);
+//    Serial.print("gyII: ");
+//    Serial.println(gyP+pitch);
+//    Serial.print(" gyP: ");
+//    Serial.println(gyP);
     pitchPrev = pitch;
     pitch = (1-alpha)*(gyP+pitch)+alpha*accP;
-//    pitch = -pitch;
+//    Serial.print(pitch);Serial.print(" = ");
+//    Serial.print(1-alpha);Serial.print("*(");
+//    Serial.print(gyP);Serial.print(" + ");
+//    Serial.print(pitch);Serial.print(") + ");
+//    Serial.print(alpha);Serial.print(" * ");
+//    Serial.println(accP);
+//    Serial.println();
     pitchRate = (pitch-pitchPrev)/dT;
+    Serial.print("Pitch: ");
+    Serial.println(pitch);
+    Serial.print(" PitchRate: ");
+    Serial.println(pitchRate);
 }
 
 void MPULibISR(void){
@@ -61,7 +69,7 @@ void MPULibISR(void){
 
 void setup(){
   Serial.begin(115200);
-  initAll();
+  initMPUSensor();
 }
 
 
@@ -78,7 +86,14 @@ void initMPUSensor(){
   // verify connection
   Serial.println(F("Testing device connections..."));
   Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
-  
+
+  // wait for ready
+//  Serial.println(F("\nSend any character to begin DMP programming and demo: "));
+//  while (Serial.available() && Serial.read()); // empty buffer
+//  while (!Serial.available()); // wait for data
+//  while (Serial.available() && Serial.read()); // empty buffer again
+
+  // load and configure the DMP
   Serial.println(F("Initializing DMP..."));
   int devStatus = mpu.dmpInitialize();
 
@@ -112,6 +127,10 @@ void initMPUSensor(){
   }
   else
   {
+    // ERROR!
+    // 1 = initial memory load failed
+    // 2 = DMP configuration updates failed
+    // (if it's going to break, usually the code will be 1)
     Serial.print(F("DMP Initialization failed (code "));
     Serial.print(devStatus);
     Serial.println(F(")"));
@@ -125,40 +144,4 @@ void loop(){
     readMPUData(mpu);
     isMPUReady = false;
   }
-  Serial.print("leftRotation ");
-  Serial.println(leftMotor.encoder.rotation);
-  Serial.print("rightRotation ");
-  Serial.println(rightMotor.encoder.rotation);
-  Serial.print("xDot = ");
-  Serial.println(xDot());
-//  Serial.print("pitch = ");
-//  Serial.println(pitch);
-//  Serial.print("pitchDot = ");
-//  Serial.println(pitchRate);
-//    Serial.println("Torque = ");
-//    Serial.print(lqr());
-
-}
-
-
-void initAll() {
-  Serial.begin(115200);
-  attachMotorInterrupts();
-  initMPUSensor();
-}
-
-double x() {
-  return (leftMotor.encoder.getX() + rightMotor.encoder.getX()) / 2;
-}
-
-double xDot() {
-  return (leftMotor.encoder.getXDot() + rightMotor.encoder.getXDot()) / 2;
-}
-
-double lqr() {
-  double torque;
-  torque = -(K[0]*x() + K[1]*xDot() + K[2]*pitch + K[3]*pitchRate) ;
-  return torque;
-//  leftMotor.generate(torque);
-//  rightMotor.generate(torque);
 }
