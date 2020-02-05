@@ -133,9 +133,9 @@ void loop(){
   Serial.print("pitchDot = ");
   Serial.println(pitchRate);
   Serial.println("");
-//    Serial.println("Torque = ");
-//    Serial.print(lqr());
-
+  double tVal = lqr();
+  Serial.print("Torque = ");
+  Serial.println(tVal);
 }
 
 
@@ -155,8 +155,8 @@ double xDot() {
 
 double lqr() {
   double torque;
-  torque = -(K[0]*x() + K[1]*xDot() + K[2]*pitch + K[3]*pitchRate) ;
+  torque = -(K[0]*x() + K[1]*xDot() + K[2]*pitch*PI/180 + K[3]*pitchRate*PI/180) ;
+  leftMotor.generate(torque);
+  rightMotor.generate(torque);
   return torque;
-//  leftMotor.generate(torque);
-//  rightMotor.generate(torque);
 }

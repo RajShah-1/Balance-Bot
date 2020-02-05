@@ -9,7 +9,7 @@
 #include "Encoders.h"
 
 #define RESISTANCE 7
-#define MOTOR_CONSTANT 0.085
+#define MOTOR_CONSTANT 0.036956
 #define GEAR_RATIO 30
 
 class Motor {

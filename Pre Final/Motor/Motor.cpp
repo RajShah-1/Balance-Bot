@@ -43,8 +43,10 @@ void Motor::reverse(int speed) {
 
 void Motor::generate(double torque) {
     int voltage;
-    voltage = RESISTANCE * torque / (MOTOR_CONSTANT * GEAR_RATIO) + encoder.getPhiDot() * MOTOR_CONSTANT;
-    voltage = voltage * 1023 / 12;
+    voltage = (int) (RESISTANCE*torque/(MOTOR_CONSTANT*GEAR_RATIO)+encoder.getPhiDot()*MOTOR_CONSTANT + 0.5);
+    // voltage = (int) ((double)voltage*1023.0/12.0 + 0.5);
+    Serial.print("voltage: ");
+    Serial.println(voltage);
     if (voltage > 0) {
         forward(voltage);
     }
