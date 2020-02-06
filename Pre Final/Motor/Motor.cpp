@@ -42,16 +42,19 @@ void Motor::reverse(int speed) {
 }
 
 void Motor::generate(double torque) {
-    int voltage;
-    voltage = (int) (RESISTANCE*torque/(MOTOR_CONSTANT*GEAR_RATIO)+encoder.getPhiDot()*MOTOR_CONSTANT + 0.5);
-    // voltage = (int) ((double)voltage*1023.0/12.0 + 0.5);
-    Serial.print("voltage: ");
-    Serial.println(voltage);
-    if (voltage > 0) {
-        forward(voltage);
+    double voltage;
+    voltage = (RESISTANCE*torque/(MOTOR_CONSTANT*GEAR_RATIO)+encoder.getPhiDot()*GEAR_RATIO*MOTOR_CONSTANT + 0.5);
+    // Limit the value of the voltage to +/- 12V
+    voltage = (voltage > 12.0) ? 12.0 : voltage;
+    voltage = (voltage < -12.0) ? -12.0 : voltage;
+    // Serial.print("Voltage: ");Serial.println(voltage);
+    int analogVal = (int) ((double)voltage*1023.0/12.0 + 0.5);
+    // Serial.print(analogVal);
+    if (analogVal > 0) {
+        forward(analogVal);
     }
     else {
-        reverse(-voltage);
+        reverse(-analogVal);
     }
 }
 

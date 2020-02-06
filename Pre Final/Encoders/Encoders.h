@@ -16,7 +16,7 @@ class Encoders {
         byte A;
         byte B;
         volatile byte lastStateA;
-        volatile int rotation;
+        volatile long long rotation;
         volatile double phiDot;
         volatile unsigned long timeStamp;
 
