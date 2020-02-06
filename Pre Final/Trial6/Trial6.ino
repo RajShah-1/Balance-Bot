@@ -7,20 +7,21 @@
 
 const byte lM1 = 22;  //M1 - OUT1 - IN1 - 22
 const byte lM2 = 23;  //M2 - OUT2 - IN2 - 23
-const byte lME = A0;  //ENA - A0
+const byte lME = A6;  //ENA - A0
 const byte lMA = 18;  //A - 18
 const byte lMB = 17;  //B - 17
 
 const byte rM1 = 30;  //M2 - OUT4 - IN4 - 30
 const byte rM2 = 31;  //M1 - OUT3 - IN3 - 31
-const byte rME = A1;  //ENB - A1
+const byte rME = A7;  //ENB - A1
 const byte rMA = 3;   //A - 2
 const byte rMB = 4;   //B - 3
 
 const double F_CUT = 5.0;
 const double alpha = 0.05;
-double K[] = {-1, -1.5816, -5.4143, -1.2476};
-
+//double K[] = {-1, -1.5816, -5.4143, -1.2476};
+//double K[] = {  -10.0000,   -25.0662 , -147.7354 ,  -35.2567};
+double K[] = { -0.3, 0, 0, 0};
 MPU6050 mpu;
 
 Motor leftMotor(lM1, lM2, lME, lMA, lMB);
@@ -124,18 +125,20 @@ void loop(){
     readMPUData(mpu);
     isMPUReady = false;
   }
-  Serial.print("x = ");
-  Serial.println(x());
-  Serial.print("xDot = ");
-  Serial.println(xDot());
-  Serial.print("pitch = ");
-  Serial.println(pitch);
-  Serial.print("pitchDot = ");
-  Serial.println(pitchRate);
-  Serial.println("");
+//  Serial.print("x = ");
+//  Serial.println(x());
+//  Serial.print("xDot = ");
+//  Serial.println(xDot());
+//  Serial.print("pitchh = ");
+//  Serial.println(accP);
+//  Serial.print("pitchDot = ");
+//  Serial.println(pitch+gyP);
+//  Serial.println("");
   double tVal = lqr();
-  Serial.print("Torque = ");
-  Serial.println(tVal);
+  Serial.print(1e4*tVal);
+  Serial.print(" ");
+//  Serial.print("Torque = ");
+  Serial.println(x()*1e4);
 }
 
 
@@ -157,6 +160,7 @@ double lqr() {
   double torque;
   torque = -(K[0]*x() + K[1]*xDot() + K[2]*pitch*PI/180 + K[3]*pitchRate*PI/180) ;
   leftMotor.generate(torque);
+  // 0.245-1.69
   rightMotor.generate(torque);
   return torque;
 }

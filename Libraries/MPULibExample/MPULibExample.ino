@@ -4,7 +4,7 @@
 #include "MPULib.h"
 
 
-MPULib sensor(10);
+MPULib sensor;
 
 void setup() {
   Serial.begin(9600);
