@@ -21,12 +21,12 @@ B = [0;
 % x, xDot, theta, thetaDot
 
 Q = [1 0 0 0;
-0 0 0 0;
-0 0 0 0;
-0 0 0 0];
+0 100 0 0;
+0 0 3000 0;
+0 0 0 5000];
 
-R = 1e2;
+R = 1e5;
 
 [K, S, P] = lqr(A, B, Q, R)
-disp("Eigs:");
-eig(A-B*K)
+% disp("Eigs:");
+% eig(A-B*K)

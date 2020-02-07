@@ -1,4 +1,4 @@
-#include "I2Cdev.h"
+   #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 #include "Wire.h"
 #include <Motor.h>
@@ -7,22 +7,23 @@
 
 const byte lM1 = 22;  //M1 - OUT1 - IN1 - 22
 const byte lM2 = 23;  //M2 - OUT2 - IN2 - 23
-const byte lME = A6;  //ENA - A0
+const byte lME = 12;  //ENA - 12
 const byte lMA = 18;  //A - 18
 const byte lMB = 17;  //B - 17
 
 const byte rM1 = 30;  //M2 - OUT4 - IN4 - 30
 const byte rM2 = 31;  //M1 - OUT3 - IN3 - 31
-const byte rME = A7;  //ENB - A1
+const byte rME = 13;  //ENB - 13
 const byte rMA = 3;   //A - 2
 const byte rMB = 4;   //B - 3
 
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
 
+double K[] = {-0.0032,   -0.0377,   -0.7038,   -0.2368};
+
 const double fCut = 5.0;
-const double alpha = 0.05;
-double K[] = {  -10.0000,   -25.0662 , -147.7354 ,  -35.2567};
+const double alpha   = 0.05;
 
 unsigned long timeStampMPU, currTime;
 
@@ -31,7 +32,7 @@ double accP, gyP, dT, Tau;
 double alphaHPF, alphaLPF;
 double pitch, pitchPrev, pitchRate; 
 
-Motor leftMotor(lM1, lM2, lME, lMA, lMB);
+Motor leftMotor(lM1, lM2, lME, lMA, lMB, 130);
 Motor rightMotor(rM1, rM2, rME, rMA, rMB);
 
 MPU6050 mpu;
@@ -54,11 +55,14 @@ void loop(){
   Serial.print("xDot = ");
   Serial.println(xDot());
   Serial.print("Pitch = ");
+  Serial.print(accP);Serial.print("\t");
   Serial.println(pitch);
   Serial.print("pitchRate = ");
   Serial.println(pitchRate);
   double tVal = lqr();
-  Serial.println(1e4*tVal);
+  Serial.println(tVal);
+//  leftMotor.generate(0);
+//  leftMotor.forward(127);
 }
 
 void MPUSensorISR(void){
@@ -93,11 +97,12 @@ void readMPUData(){
 }
 
 double lqr() {
-  double torque;
-  torque = -(K[0]*x() + K[1]*xDot() + K[2]*pitch*PI/180 + K[3]*pitchRate*PI/180) ;
-  leftMotor.generate(torque);
-  // 0.245-1.69
-  rightMotor.generate(torque);
+  double torque, voltage;
+  torque = -0.25*(K[0]*x() + K[1]*xDot() + K[2]*pitch*PI/180 + K[3]*pitchRate*PI/180) ;
+  voltage = (RESISTANCE*torque/(MOTOR_CONSTANT*GEAR_RATIO)); // + (xDot()/0.03)*GEAR_RATIO*MOTOR_CONSTANT);
+  leftMotor.generate(voltage);
+  rightMotor.generate(voltage);
+  // Range: 0.245-1.69
   return torque;
 }
 
@@ -131,13 +136,13 @@ void initMPUSensor(){
 
   Serial.println("Updating internal sensor offsets...");
   
-  mpu.setXGyroOffset(13);
-  mpu.setYGyroOffset(47);
-  mpu.setZGyroOffset(-916);
+  mpu.setXGyroOffset(-893);
+  mpu.setYGyroOffset(36);
+  mpu.setZGyroOffset(16);
 
-  mpu.setXAccelOffset(-3768);
-  mpu.setYAccelOffset(-1314);
-  mpu.setZAccelOffset(1419);
+  mpu.setXAccelOffset(-3843);
+  mpu.setYAccelOffset(-1289);
+  mpu.setZAccelOffset(4915);
 
   Serial.print(mpu.getXAccelOffset());Serial.print("\t");
   Serial.print(mpu.getYAccelOffset());Serial.print("\t");
