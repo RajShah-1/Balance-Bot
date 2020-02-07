@@ -103,14 +103,12 @@ function dy = cart_pendulum_dynamics(y, m, M, L, Iw, Ib, r,  g,  u)
   sinT = sin(pi - y(3));
   cosT = cos(pi - y(3));
   
-  k = (m*m*L*L)/(m*L*L + Ib);
+  k = (m.*m.*L.*L)/(m.*L.*L + Ib);
   
   dy(1,1) = y(2);
   dy(2,1) = (1./(m + 2.*M + 2.*Iw./(r.*r) - k.*cosT.*cosT)).*(-k.*g.*cosT.*sinT + m.*L.*y(4).*y(4).*sinT + (1./r + (k.*cosT)./(m.*L)).*u);
   dy(3,1) = y(4);
   dy(4,1) = (m.*g.*L.*sinT - m.*L.*dy(2,1).*cosT - u)./(m.*L.*L + Ib);
-  
-  #theta changed to pi-theta 
 endfunction
 
 ## Function : sim_cart_pendulum()
@@ -178,7 +176,7 @@ endfunction
 ##          calculated using Pole Placement Technique.
 function [t,y] = pole_place_cart_pendulum(m, M, L, Iw, Ib, r, g, y_setpoint, y0)
   [A, B] = cart_pendulum_AB_matrix(m, M, L, Iw, Ib, r, g);
-  eigs = [-0.0005, -0.001, -0.5, -0.5];         ## Initialise desired eigenvalues
+  eigs = [-0.00005, -0.0001, -0.5, -0.005];         ## Initialise desired eigenvalues
   K = place(A, B, eigs)   ## Calculate K matrix for desired eigenvalues
   tspan = 0:0.1:40;
   [t,y] = ode45(@(t,y)cart_pendulum_dynamics(y, m, M, L, Iw, Ib, r, g, -K*(y-y_setpoint)),tspan,y0);
@@ -201,17 +199,22 @@ endfunction
 ##          This integrates the system of differential equation from t0 = 0 to 
 ##          tf = 10 with initial condition y0 and input u = -Kx where K is
 ##          calculated using LQR Controller.
-function [t,y] = lqr_cart_pendulum(m, M, L, Iw, Ib, r, g, y_setpoint, y0)
+function [K] = lqr_cart_pendulum(m, M, L, Iw, Ib, r, g, y_setpoint, y0)
   [A,B] = cart_pendulum_AB_matrix(m, M, L, Iw, Ib, r, g);   ## Initialize A and B matrix
-  Q = [0.05 0 0 0;            ## Initialise Q matrix
-       0 0.1 0 0;
-       0 0 0.005 0;
-       0 0 0 0.005];            
-  R = 1;                   ## Initialise R 
-  
-  K = lqr(A, B, Q, R)  ## Calculate K matrix from A,B,Q,R matrices
-  tspan = 0:0.1:40;
-  [t,y] = ode45(@(t,y)cart_pendulum_dynamics(y, m, M, L, Iw, Ib, r, g, -K*(y-y_setpoint)),tspan,y0);
+  Q = [2 0 0 0;            ## Initialise Q matrix
+       0 2 0 0;
+       0 0 6 0;
+       0 0 0 6];            
+  R = 1000;                   ## Initialise R 
+  #csys = ss(A, B);
+  #dsys = c2d(csys, 4*1e-3);
+  #[G, X, L] = dlqr(dsys, Q, R);
+  #disp(G);
+  K = lqr(A, B, Q, R);
+  disp(K);
+  ## Calculate K matrix from A,B,Q,R matrices
+  #tspan = 0:0.1:40;
+  #[t,y] = ode45(@(t,y)cart_pendulum_dynamics(y, m, M, L, Iw, Ib, r, g, -K*(y-y_setpoint)),tspan,y0);
 endfunction
 
 ## Function : cart_pendulum_main()
@@ -227,14 +230,14 @@ function cart_pendulum_main()
   Ib = 79275.07*1e-7;
   r = 3.3*1e-2;
   g = 9.80;
-  y0 = [0; 0; pi + 3; 0];
-  y_setpoint = [3; 0; pi; 0];
+  y0 = [0; 0; pi + 0.3; 0];
+  y_setpoint = [0; 0; pi; 0];
 ##[t,y] = sim_cart_pendulum(m, M, L, Iw, Ib, r, g, y0);
-[t,y] = pole_place_cart_pendulum(m, M, L, Iw, Ib, r, g, y_setpoint, y0)
-##[t,y] = lqr_cart_pendulum(m, M, L, Iw, Ib, r, g, y_setpoint, y0)
-  for k = 1:length(t) 
-    draw_cart_pendulum(y(k, :), 1, 5, 2);  
-  endfor
+##[t,y] = pole_place_cart_pendulum(m, M, L, Iw, Ib, r, g, y_setpoint, y0)
+[K] = lqr_cart_pendulum(m, M, L, Iw, Ib, r, g, y_setpoint, y0);
+  ##for k = 1:length(t) 
+    ##draw_cart_pendulum(y(k, :), 1, 5, 2);  
+  ##endfor
   
 endfunction
 
