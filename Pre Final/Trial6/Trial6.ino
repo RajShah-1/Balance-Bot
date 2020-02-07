@@ -20,8 +20,7 @@ const byte rMB = 4;   //B - 3
 const double F_CUT = 5.0;
 const double alpha = 0.05;
 //double K[] = {-1, -1.5816, -5.4143, -1.2476};
-//double K[] = {  -10.0000,   -25.0662 , -147.7354 ,  -35.2567};
-double K[] = { -0.3, 0, 0, 0};
+double K[] = {  -10.0000,   -25.0662 , -147.7354 ,  -35.2567};
 MPU6050 mpu;
 
 Motor leftMotor(lM1, lM2, lME, lMA, lMB);
@@ -43,11 +42,11 @@ void readMPUData(MPU6050 mpu){
     gxVal = (double)gx/131.0;
     alphaHPF = alphaLPF = Tau/(Tau+dT);
     gyFx = (1-alphaHPF)*(gxVal-gxPrev)+(1-alphaHPF)*gyFx;
-    
     accFx = alphaLPF*accFx+(1-alphaLPF)*ax;
     accFy = alphaLPF*accFy+(1-alphaLPF)*ay;
     accFz = alphaLPF*accFz+(1-alphaLPF)*az;
     accP = -atan(accFy/abs(accFz))*180/PI;
+
     gyP = dT*gyFx;
 
     pitchPrev = pitch;
@@ -63,7 +62,6 @@ void MPULibISR(void){
 void setup(){
   initAll();
 }
-
 
 void initMPUSensor(){
   Wire.begin();
@@ -129,16 +127,22 @@ void loop(){
 //  Serial.println(x());
 //  Serial.print("xDot = ");
 //  Serial.println(xDot());
-//  Serial.print("pitchh = ");
-//  Serial.println(accP);
-//  Serial.print("pitchDot = ");
-//  Serial.println(pitch+gyP);
+  Serial.print("accPitch = ");
+  Serial.print(accP);
+  Serial.print("\tgyPitch = ");
+  Serial.println(pitch+gyP);
+  Serial.print("Pitch = ");
+  Serial.println(pitch);
+  
+  Serial.print("pitchRate = ");
+  Serial.println(pitchRate);
 //  Serial.println("");
-  double tVal = lqr();
-  Serial.print(1e4*tVal);
-  Serial.print(" ");
+//  double tVal = lqr();
+//  Serial.print(1e4*tVal);
+//  Serial.print(" ");
 //  Serial.print("Torque = ");
-  Serial.println(x()*1e4);
+//  Serial.println(x()*1e4);
+  delay(10);  
 }
 
 
