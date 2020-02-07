@@ -6,6 +6,7 @@
 #define Encoders_h
 
 #include "Arduino.h"
+#include "digitalWriteFast.h"
 
 #define RADIUS 0.03
 #define RESOLUTION 540
@@ -15,8 +16,7 @@ class Encoders {
     public:
         byte A;
         byte B;
-        volatile byte lastStateA;
-        volatile long long rotation;
+        volatile long rotation;
         volatile double phiDot;
         volatile unsigned long timeStamp;
 
@@ -27,6 +27,7 @@ class Encoders {
         double getPhiDot();
         double getX();
         double getXDot();
+        long getRotation();
 };
 
 #endif

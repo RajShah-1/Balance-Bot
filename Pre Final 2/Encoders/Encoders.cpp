@@ -16,13 +16,18 @@ void Encoders::init() {
 	pinMode(A, INPUT_PULLUP);
 	pinMode(B, INPUT_PULLUP);
 
+	//To let RC filter get charged
+	delayMicroseconds(2000);
 	rotation = 0;
 	timeStamp = micros();
-	lastStateA = digitalRead(A);
 }
 
 double Encoders::getPhi() {
 	return (2.0 * M_PI * rotation)/(double) RESOLUTION;
+}
+
+long Encoders::getRotation(){
+	return rotation;
 }
 
 double Encoders::getPhiDot() {

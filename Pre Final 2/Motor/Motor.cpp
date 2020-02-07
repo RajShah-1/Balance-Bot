@@ -62,14 +62,13 @@ void Motor::generate(double voltage) {
 void leftEncoderInterruptA() {
     double dT = (double) ((micros() - leftMotor.encoder.timeStamp)) / 1e6;
     
-    leftMotor.encoder.lastStateA = !leftMotor.encoder.lastStateA;
-    if (leftMotor.encoder.lastStateA != digitalRead(leftMotor.encoder.B)) {
-        leftMotor.encoder.rotation++;
-        leftMotor.encoder.phiDot = 0.0116355283 / dT;
-    } 
-    else {
+    if (digitalReadFast(18) != digitalReadFast(17)) {
         leftMotor.encoder.rotation--;
         leftMotor.encoder.phiDot = -0.0116355283 / dT;
+    } 
+    else {
+        leftMotor.encoder.rotation++;
+        leftMotor.encoder.phiDot = 0.0116355283 / dT;
   
     }
     leftMotor.encoder.timeStamp = micros();
@@ -78,14 +77,13 @@ void leftEncoderInterruptA() {
 void rightEncoderInterruptA() { 
     double dT = (double) ((micros() - rightMotor.encoder.timeStamp)) / 1e6;
     
-    rightMotor.encoder.lastStateA = !rightMotor.encoder.lastStateA;
-    if (rightMotor.encoder.lastStateA != digitalRead(rightMotor.encoder.B)) {
-        rightMotor.encoder.rotation--;
-        rightMotor.encoder.phiDot = -0.0116355283 / dT;
+    if (digitalReadFast(3) != digitalReadFast(4)) {
+        rightMotor.encoder.rotation++;
+        rightMotor.encoder.phiDot = 0.0116355283 / dT;
     } 
     else {
-        rightMotor.encoder.rotation++;
-        rightMotor.encoder.phiDot = 0.0116355283 / dT;  
+        rightMotor.encoder.rotation--;
+        rightMotor.encoder.phiDot = -0.0116355283 / dT;  
     }
     rightMotor.encoder.timeStamp = micros();
  
