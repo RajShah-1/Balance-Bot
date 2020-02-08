@@ -2,7 +2,6 @@
   Encoders.h - A Library for Encoders
   Created by Shivam Malviya, Jan 30, 2020.
 */
-#include "Arduino.h"
 #include "Motor.h"
 
 Motor::Motor(byte M1, byte M2, byte EN, byte A, byte B, unsigned int motorOffset = 0) {
@@ -41,26 +40,24 @@ void Motor::reverse(int speed) {
     analogWrite(EN, speed);
 }
 
-void Motor::generate(double voltage) {
-    int analogVal = (int) ((double)voltage*255.0/12.0 + 0.5);
+void Motor::generate(int analogVal) {
     if (analogVal > 0) {
         analogVal += MotorOffset;
         if(analogVal > 255)  { analogVal = 255; }
-        Serial.print("Voltage: ");Serial.println(analogVal);
         forward(analogVal);    
     }
     else {
         analogVal -= MotorOffset;
         if(analogVal < -255) analogVal = -255;
-        Serial.print("Voltage: ");Serial.println(analogVal);
         reverse(-analogVal);
     }
+    Serial.println(analogVal);
 }
 
 void leftEncoderInterruptA() {
     double dT = (double) ((micros() - leftMotor.encoder.timeStamp)) / 1e6;
     
-    if (digitalReadFast(18) != digitalReadFast(17)) {
+    if (digitalReadFast(LEFT_ENCODER_A) != digitalReadFast(LEFT_ENCODER_B)) {
         leftMotor.encoder.rotation--;
         leftMotor.encoder.phiDot = -0.0116355283 / dT;
     } 
@@ -75,7 +72,7 @@ void leftEncoderInterruptA() {
 void rightEncoderInterruptA() { 
     double dT = (double) ((micros() - rightMotor.encoder.timeStamp)) / 1e6;
     
-    if (digitalReadFast(3) != digitalReadFast(4)) {
+    if (digitalReadFast(RIGHT_ENCODER_A) != digitalReadFast(RIGHT_ENCODER_B)) {
         rightMotor.encoder.rotation++;
         rightMotor.encoder.phiDot = 0.0116355283 / dT;
     } 
@@ -99,4 +96,13 @@ void attachMotorInterrupts() {
     rightEncoderInterruptA,
     CHANGE
     );
+}
+
+void forward (double voltage) {
+    int analogVal = (int) ((double)voltage*255.0/12.0 + 0.5);
+    int offset = OFFSET_FACTOR*(rightMotor.encoder.rotation - leftMotor.encoder.rotation); 
+    Serial.print("Left Voltage : ");
+    leftMotor.generate((int) (analogVal + offset));
+    Serial.print("Right Voltage : ");
+    rightMotor.generate((int) (analogVal - offset));
 }
