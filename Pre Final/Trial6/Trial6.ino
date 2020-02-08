@@ -134,8 +134,8 @@ void loop(){
   Serial.print("Pitch = ");
   Serial.println(pitch);
   
-  Serial.print("pitchRate = ");
-  Serial.println(pitchRate);
+//  Serial.print("pitchRate = ");
+//  Serial.println(pitchRate);
 //  Serial.println("");
 //  double tVal = lqr();
 //  Serial.print(1e4*tVal);
