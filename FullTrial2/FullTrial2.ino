@@ -1,4 +1,4 @@
-   #include "I2Cdev.h"
+#include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 #include "Wire.h"
 #include <Motor.h>
@@ -7,20 +7,20 @@
 
 const byte lM1 = 22;  //M1 - OUT1 - IN1 - 22
 const byte lM2 = 23;  //M2 - OUT2 - IN2 - 23
-const byte lME = 12;  //ENA - 12
+const byte lME = 11;  //ENA - 11
 const byte lMA = 18;  //A - 18
 const byte lMB = 17;  //B - 17
 
 const byte rM1 = 30;  //M2 - OUT4 - IN4 - 30
 const byte rM2 = 31;  //M1 - OUT3 - IN3 - 31
-const byte rME = 13;  //ENB - 13
+const byte rME = 12;  //ENB - 12
 const byte rMA = 3;   //A - 2
 const byte rMB = 4;   //B - 3
 
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
 
-double K[] = {-0.0032,   -0.0377,   -0.7038,   -0.2368};
+double K[] = {-0.0316,   -0.3676,   -4.0692,   -2.2933};
 
 const double fCut = 5.0;
 const double alpha   = 0.05;
@@ -32,7 +32,7 @@ double accP, gyP, dT, Tau;
 double alphaHPF, alphaLPF;
 double pitch, pitchPrev, pitchRate; 
 
-Motor leftMotor(lM1, lM2, lME, lMA, lMB, 130);
+Motor leftMotor(lM1, lM2, lME, lMA, lMB);
 Motor rightMotor(rM1, rM2, rME, rMA, rMB);
 
 MPU6050 mpu;
@@ -46,23 +46,23 @@ void setup(){
 }
 
 void loop(){
-  if(isMPUReady){
-    readMPUData();
-    isMPUReady = false; 
-  }
-  Serial.print("x = ");
-  Serial.println(x());
-  Serial.print("xDot = ");
-  Serial.println(xDot());
-  Serial.print("Pitch = ");
-  Serial.print(accP);Serial.print("\t");
-  Serial.println(pitch);
-  Serial.print("pitchRate = ");
-  Serial.println(pitchRate);
-  double tVal = lqr();
-  Serial.println(tVal);
-//  leftMotor.generate(0);
-//  leftMotor.forward(127);
+  leftMotor.forward(40);
+  rightMotor.forward(35);
+//  if(isMPUReady){
+//    readMPUData();
+//    isMPUReady = false; 
+//  }
+//  Serial.print("x = ");
+//  Serial.println(x());
+//  Serial.print("xDot = ");
+//  Serial.println(xDot());
+//  Serial.print("Pitch = ");
+//  Serial.print(accP);Serial.print("\t");
+//  Serial.println(pitch);
+//  Serial.print("pitchRate = ");
+//  Serial.println(pitchRate);
+//  double tVal = lqr();
+//  Serial.println(tVal);
 }
 
 void MPUSensorISR(void){
@@ -98,7 +98,7 @@ void readMPUData(){
 
 double lqr() {
   double torque, voltage;
-  torque = -0.25*(K[0]*x() + K[1]*xDot() + K[2]*pitch*PI/180 + K[3]*pitchRate*PI/180) ;
+  torque = -(K[0]*x() + K[1]*xDot() + K[2]*pitch*PI/180 + K[3]*pitchRate*PI/180) ;
   voltage = (RESISTANCE*torque/(MOTOR_CONSTANT*GEAR_RATIO)); // + (xDot()/0.03)*GEAR_RATIO*MOTOR_CONSTANT);
   leftMotor.generate(voltage);
   rightMotor.generate(voltage);
