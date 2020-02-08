@@ -20,20 +20,23 @@ const byte rMB = 4;   //B - 3
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
 
-double K[] = {-0.0316,   -0.3676,   -4.0692,   -2.2933};
+// ORIGINAL double K[] = {-0.0183,   -0.2152,   -2.6887,   -1.3270};
+// MYTRIAL-1 
+double K[] = {-0.0804,   -0.3282,   -2.0895,   -0.6782};
+// PDF TRIAL-1 double K[] = {-11.1366  -16.2444  -52.5420  -12.6611};
 
 const double fCut = 5.0;
 const double alpha   = 0.05;
 
-unsigned long timeStampMPU, currTime;
+unsigned long timeStampMPU, currTime, timeStampLoop, delayValLoop;
 
 double accFx, accFy, accFz, gyFx, gxVal, gxPrev;
 double accP, gyP, dT, Tau;
 double alphaHPF, alphaLPF;
 double pitch, pitchPrev, pitchRate; 
 
-Motor leftMotor(lM1, lM2, lME, lMA, lMB);
-Motor rightMotor(rM1, rM2, rME, rMA, rMB);
+Motor leftMotor(lM1, lM2, lME, lMA, lMB, 20);
+Motor rightMotor(rM1, rM2, rME, rMA, rMB, 20);
 
 MPU6050 mpu;
 
@@ -41,28 +44,38 @@ volatile bool isMPUReady;
 
 void setup(){
   Serial.begin(115200);
+//  attachTimerInterruptmpuMPU();
   attachMotorInterrupts();
   initMPUSensor();
 }
 
 void loop(){
-  leftMotor.forward(40);
-  rightMotor.forward(35);
-//  if(isMPUReady){
-//    readMPUData();
-//    isMPUReady = false; 
-//  }
-//  Serial.print("x = ");
-//  Serial.println(x());
-//  Serial.print("xDot = ");
-//  Serial.println(xDot());
-//  Serial.print("Pitch = ");
-//  Serial.print(accP);Serial.print("\t");
-//  Serial.println(pitch);
-//  Serial.print("pitchRate = ");
-//  Serial.println(pitchRate);
-//  double tVal = lqr();
-//  Serial.println(tVal);
+  timeStampLoop = micros();
+
+  
+  rightMotor.forward(36);
+  if(isMPUReady){
+    readMPUData();
+    isMPUReady = false; 
+  }
+  Serial.print("x = ");
+  Serial.println(x());
+  Serial.print("xDot = ");
+  Serial.println(xDot());
+  Serial.print("Pitch = ");
+  Serial.print(accP);Serial.print("\t");
+  Serial.println(pitch);
+  Serial.print("pitchRate = ");
+  Serial.println(pitchRate);
+  double tVal = lqr();
+  Serial.println(tVal);
+  
+  delayValLoop = 2000-timeStampLoop;
+  if(delayValLoop > 0){
+    delayMicroseconds(delayValLoop);
+  }else{
+    Serial.println("Nooooo......");
+  }
 }
 
 void MPUSensorISR(void){
@@ -135,14 +148,23 @@ void initMPUSensor(){
   Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 
   Serial.println("Updating internal sensor offsets...");
-  
-  mpu.setXGyroOffset(-893);
-  mpu.setYGyroOffset(36);
-  mpu.setZGyroOffset(16);
 
-  mpu.setXAccelOffset(-3843);
-  mpu.setYAccelOffset(-1289);
-  mpu.setZAccelOffset(4915);
+  mpu.setXGyroOffset(13);
+  mpu.setYGyroOffset(47);
+  mpu.setZGyroOffset(-916);
+
+  mpu.setXAccelOffset(-3768);
+  mpu.setYAccelOffset(-1314);
+  mpu.setZAccelOffset(1419);
+
+  
+//  mpu.setXGyroOffset(-893);
+//  mpu.setYGyroOffset(36);
+//  mpu.setZGyroOffset(16);
+//
+//  mpu.setXAccelOffset(-3843);
+//  mpu.setYAccelOffset(-1289);
+//  mpu.setZAccelOffset(4915);
 
   Serial.print(mpu.getXAccelOffset());Serial.print("\t");
   Serial.print(mpu.getYAccelOffset());Serial.print("\t");
@@ -163,4 +185,32 @@ void initMPUSensor(){
   
   Tau = 1/(2*PI*fCut);
   accP = gyP = pitch = accFx = accFy = accFz = gxPrev = gyFx = 0;
+}
+
+void attachTimerInterruptmpuMPU(){
+  cli(); //stop interrupts
+
+  // TIMER-4
+
+  //set timer4 interrupt at 5KHz with preScaler = 8
+  TCCR4A = 0; // set entire TCCR1A register to 0
+  TCCR4B = 0; // same for TCCR1B
+  TCNT4 = 0;  //initialize counter value to 0
+  
+  // set compare match register for 1hz increments
+  
+  OCR4A = 15624 / 1; // = (16*10^6) / (preScaler*fInterrupt) - 1 (must be <65536) 0.KHz
+  //  OCR4A = 15624/1; 1Hz
+  // turn on CTC mode
+  TCCR4B |= (1 << WGM12);
+  // Set CS12 and CS10 bits for 1024 prescaler
+     TCCR4B |= (1 << CS12) | (1 << CS10);
+  // Use preScaler = 1
+//  TCCR4B |= (1 << CS10);
+    
+  // enable timer compare interrupt
+  TIMSK4 |= (1 << OCIE4A);
+
+  sei(); //allow interrupts
+  Serial.println("Timer Interrrupts attached.");
 }

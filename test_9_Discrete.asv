@@ -1,4 +1,4 @@
-function test_9() 
+function test_9_Discrete() 
 Mw = 0.033;
 Mb = 1.083;
 Ib = 79275.07 * 10^-7;
@@ -26,6 +26,8 @@ Q = [1e2 0 0 0;
 0 0 0 6e4];
 
 R = 4e4;
+csys = ss(A, B);
+dsys = c2d(csys, 
 
 
 [K, S, P] = lqr(A, B, Q, R)
