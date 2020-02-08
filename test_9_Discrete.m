@@ -20,14 +20,14 @@ B = [0;
 
 % x, xDot, theta, thetaDot
 
-Q = [1e3 0 0 0;
-0 1e4 0 0;
-0 0 6e4 0;
-0 0 0 6e4];
+Q = [0.1 0 0 0;
+0 10 0 0;
+0 0 60 0;
+0 0 0 60];
 
-R = 1e2;
+R = 1;
 csys = ss(A, B,zeros(4, 4),zeros(4, 1));
-dsys = c2d(csys, 4*1e-3);
+dsys = c2d(csys, 2*1e-3);
 [G, X, L] = dlqr(dsys.A,dsys.B, Q, R)
 
 % disp(G);
