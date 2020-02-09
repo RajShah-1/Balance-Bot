@@ -1,4 +1,4 @@
-function DiscreteK() 
+function [dsys.A, dsys.B, G] = DiscreteK() 
 Mw = 0.033;
 Mb = 1.083;
 Ib = 79275.07 * 10^-7;
@@ -26,7 +26,7 @@ Q = [1 0 0 0;
 0 0 0 40];
 
 R = 40;
-csys = ss(A, B,zeros(4, 4),zeros(4, 1));
+csys = ss(A, B, zeros(4, 4), zeros(4, 1));
 dsys = c2d(csys, 2*1e-3);
 [G, X, L] = dlqr(dsys.A,dsys.B, Q, R)
 
