@@ -11,7 +11,7 @@
 const int MPUAddress = 0x68 << 1; // Device address in which is also included the 8th bit for selecting the mode, read in this case.
 
 
-double K[] = {-0.0314,   -0.3421,   -2.2525,   -0.6871};
+double K[] = {-0.0490,   -0.5676,   -6.0097,   -1.1918};
 
 
 int16_t ay, az, gx;
@@ -39,11 +39,11 @@ const double alphaLPF = Tau/(Tau+dT);
 volatile double accFy, accFz, gyFx, gxVal, gxPrev;
 volatile double pitch, pitchPrev, pitchRate; 
 volatile unsigned long timeStampTimer5, currTimeTimer5, dT5;
-
+volatile double globalVoltage;
 
 MPU6050 mpu;
-Motor leftMotor(lM1, lM2, lME, lMA, lMB, 20);
-Motor rightMotor(rM1, rM2, rME, rMA, rMB, 20);
+Motor leftMotor(lM1, lM2, lME, lMA, lMB);
+Motor rightMotor(rM1, rM2, rME, rMA, rMB);
 
 
 void setup() {
@@ -57,20 +57,12 @@ void setup() {
 }
 
 void loop() {
-  Serial.print("X: ");
-  Serial.println(x());
-  
-  Serial.print("XDot: ");
-  Serial.println(xDot());
-
-  Serial.print("Pitch: ");
-  Serial.println(pitch);
-
-  
-  Serial.print("PitchRate: ");
-  Serial.println(pitchRate);
-
-  delay(100);
+  Serial.print(1e4*x());
+  Serial.print(" ");
+  Serial.print(1e2*pitch);
+  Serial.print(" ");
+  Serial.println(1e3*globalVoltage);
+  delay(1);
 }
 
 ISR(TIMER3_COMPA_vect) {
@@ -84,6 +76,7 @@ ISR(TIMER5_COMPA_vect){
   double torque, voltage; 
   torque = -(K[0]*x() + K[1]*xDot() + K[2]*pitch*PI/180 + K[3]*pitchRate*PI/180);
   voltage = (RESISTANCE*torque/(MOTOR_CONSTANT*GEAR_RATIO)); //+ (xDot()/0.03)*GEAR_RATIO*MOTOR_CONSTANT;
+  globalVoltage = torque;
   driveMotors(voltage);  
 }
 
