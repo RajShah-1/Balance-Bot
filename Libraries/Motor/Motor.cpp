@@ -48,10 +48,10 @@ void Motor::generate(int analogVal) {
     }
     else {
         analogVal -= MotorOffset;
-        if(analogVal < -255) analogVal = -255;
+        if(analogVal < -255) {analogVal = -255; }
         reverse(-analogVal);
     }
-    // Serial.println(analogVal);
+    //Serial.println(analogVal);
 }
 
 void leftEncoderInterruptA() {
@@ -93,6 +93,8 @@ void driveMotors (double voltage) {
     int offset = OFFSET_FACTOR*(rightMotor.encoder.rotation - leftMotor.encoder.rotation); 
     // Serial.print("Left Voltage : ");
     leftMotor.generate((int) (analogVal + offset));
-    // Serial.print("Right Voltage : ");
+    //Serial.print("Right Voltage : ");
     rightMotor.generate((int) (analogVal - offset));
+    //Serial.print("Difference of rotation : ");
+    //Serial.println(offset/5);
 }

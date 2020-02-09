@@ -17,8 +17,8 @@
 #define SAMPLING_TIME 0.002
 #define LEFT_ENCODER_A 18
 #define LEFT_ENCODER_B 17
-#define RIGHT_ENCODER_A 3
-#define RIGHT_ENCODER_B 4
+#define RIGHT_ENCODER_A 19
+#define RIGHT_ENCODER_B 16
 
 class Motor {
 
