@@ -11,7 +11,7 @@
 const int MPUAddress = 0x68 << 1; // Device address in which is also included the 8th bit for selecting the mode, read in this case.
 
 
-double K[] = {-0.0498,   -0.5443,   -3.5941,   -1.3057};
+double K[] = {-0.0314,   -0.3421,   -2.2525,   -0.6871};
 
 
 int16_t ay, az, gx;
