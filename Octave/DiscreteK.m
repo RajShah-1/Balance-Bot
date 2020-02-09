@@ -21,12 +21,18 @@ B = [0;
 % x, xDot, theta, thetaDot
 
 Q = [1 0 0 0;
-0 1 0 0;
-0 0 80 0;
-0 0 0 40];
+0 3 0 0;
+0 0 50 0;
+0 0 0 30];
 
+R = 20;
+
+<<<<<<< HEAD
 R = 40;
 csys = ss(A, B, zeros(4, 4), zeros(4, 1));
+=======
+csys = ss(A, B,zeros(4, 4),zeros(4, 1));
+>>>>>>> a0288fa3794131ee28fdd88d0f917a3bc7a53699
 dsys = c2d(csys, 2*1e-3);
 [G, X, L] = dlqr(dsys.A,dsys.B, Q, R)
 

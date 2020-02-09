@@ -10,10 +10,6 @@
 
 const int MPUAddress = 0x68 << 1; // Device address in which is also included the 8th bit for selecting the mode, read in this case.
 
-
-double K[] = { -0.0778,   -0.2547,   -2.3097,   -1.1422};
-
-
 int16_t ay, az, gx;
 uint8_t tmpBytesArr2[2];
 
@@ -26,8 +22,8 @@ const byte lMB = 17;  //B - 17
 const byte rM1 = 30;  //M2 - OUT4 - IN4 - 30
 const byte rM2 = 31;  //M1 - OUT3 - IN3 - 31
 const byte rME = 12;  //ENB - 12
-const byte rMA = 19;   //A - 19
-const byte rMB = 16;   //B - 16
+const byte rMA = 3;   //A - 2
+const byte rMB = 4;   //B - 3
 
 const double fCut = 5.0;
 const double alpha   = 0.05;
@@ -64,7 +60,7 @@ void loop() {
   Serial.println(1e3*globalVoltage);
   delay(1);
 }
-  
+
 ISR(TIMER3_COMPA_vect) {
     leftMotor.encoder.phiDot = 0.01163552835 * (leftMotor.encoder.rotation - leftMotor.encoder.lastRotation) / SAMPLING_TIME; //0.01163552835 = 2 * M_P! / 540.0
     rightMotor.encoder.phiDot = 0.01163552835 * (rightMotor.encoder.rotation - rightMotor.encoder.lastRotation) / SAMPLING_TIME; //0.01163552835 = 2 * M_P! / 540.0
@@ -74,7 +70,7 @@ ISR(TIMER3_COMPA_vect) {
 
 ISR(TIMER5_COMPA_vect){
   double torque, voltage; 
-  torque = -(K[0]*x() + K[1]*xDot() + K[2]*pitch*PI/180 + K[3]*pitchRate*PI/180);
+//  torque = -(K[0]*x() + K[1]*xDot() + K[2]*pitch*PI/180 + K[3]*pitchRate*PI/180);
   voltage = (RESISTANCE*torque/(MOTOR_CONSTANT*GEAR_RATIO)); //+ (xDot()/0.03)*GEAR_RATIO*MOTOR_CONSTANT;
   globalVoltage = torque;
   driveMotors(voltage);  
@@ -100,11 +96,11 @@ ISR(TIMER4_COMPA_vect){
 }
 
 double x() {
-  return leftMotor.encoder.getX();
+  return (leftMotor.encoder.getX() + rightMotor.encoder.getX()) / 2;
 }
 
 double xDot() {
-  return leftMotor.encoder.getXDot();
+  return (leftMotor.encoder.getXDot() + rightMotor.encoder.getXDot()) / 2;
 }
 
 void check_status(STAT status){
