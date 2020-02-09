@@ -74,38 +74,6 @@ void rightEncoderInterruptA() {
     }
 }
 
-void attachTimer3() {
-    //RESET Timer 3
-    TCCR3A = 0;
-
-    //Set to CTC mode
-    TCCR3B |= (1 << WGM32);
-    TCCR3B &= ~(1 << WGM31);
-    TCCR3B &= ~(1 << WGM30);
-
-    // Set to prescaler of 1
-    TCCR3B &= ~(1 << CS32);
-    TCCR3B &= ~(1 << CS31);
-    TCCR3B |= (1 << CS30);
-
-    // Enable Timer3 compare value
-    TCNT3 = 0;
-    OCR3A = COMPARE_VALUE_PHIDOT;
-
-    //Enable Timer Compare Match Interrupt
-    TIMSK3 = (1 << OCIE3A);
-
-    //Enable Global Interrupt
-    sei();
-}
-
-ISR(TIMER3_COMPA_vect) {
-    leftMotor.encoder.phiDot = 0.01163552835 * (leftMotor.encoder.rotation - leftMotor.encoder.lastRotation) / SAMPLING_TIME; //0.01163552835 = 2 * M_P! / 540.0
-    rightMotor.encoder.phiDot = 0.01163552835 * (rightMotor.encoder.rotation - rightMotor.encoder.lastRotation) / SAMPLING_TIME; //0.01163552835 = 2 * M_P! / 540.0
-    leftMotor.encoder.lastRotation = leftMotor.encoder.rotation;
-    rightMotor.encoder.lastRotation = rightMotor.encoder.rotation;        
-}
-
 void attachMotorInterrupts() {
   attachInterrupt(
     digitalPinToInterrupt(leftMotor.encoder.A), 
@@ -117,8 +85,7 @@ void attachMotorInterrupts() {
     digitalPinToInterrupt(rightMotor.encoder.A), 
     rightEncoderInterruptA,
     CHANGE
-    );
-    attachTimer3();    
+    );   
 }
 
 void driveMotors (double voltage) {
