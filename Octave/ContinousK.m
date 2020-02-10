@@ -1,4 +1,4 @@
-function ContinousK() 
+function [A, B, K] = ContinousK() 
 Mw = 0.033;
 Mb = 1.083;
 Ib = 79275.07 * 10^-7;
@@ -28,4 +28,4 @@ Q = [1e3 0 0 0;
 R = 1e4;
 
 
-[K, S, P] = lqr(A, B, Q, R)
+[K, S, P] = lqr(A, B, Q, R);

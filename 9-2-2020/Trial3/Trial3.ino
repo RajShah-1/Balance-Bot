@@ -10,7 +10,8 @@
 
 const int MPUAddress = 0x68 << 1; // Device address in which is also included the 8th bit for selecting the mode, read in this case.
 
-double K[] = {0, 0, 0, 0}; 
+double K1[] =  {-0.64795,  -1.47417,  -4.30420,  0}; 
+double K2[] = { -0.64795,  -1.47417,  -4.30420,  -0.81848}; 
 
 int16_t ay, az, gx;
 uint8_t tmpBytesArr2[2];
@@ -38,10 +39,9 @@ volatile double accFy, accFz, gyFx, gxVal, gxPrev;
 volatile double pitch, pitchPrev, pitchRate; 
 volatile unsigned long timeStampTimer5, currTimeTimer5, dT5;
 
-
 MPU6050 mpu;
-Motor leftMotor(lM1, lM2, lME, lMA, lMB, 200);
-Motor rightMotor(rM1, rM2, rME, rMA, rMB, 200);
+Motor leftMotor(lM1, lM2, lME, lMA, lMB);
+Motor rightMotor(rM1, rM2, rME, rMA, rMB);
 
 void setup() {
   Serial.begin(115200);
@@ -55,16 +55,15 @@ void setup() {
 }
 
 void loop() {
-//  Serial.print("X: ");
-//  Serial.println(x());
-//  Serial.print("XDot: ");
-//  Serial.println(xDot());
-//  Serial.print("Pitch: ");
-//  Serial.println(pitch);  
-//  Serial.print("PitchRate: ");
-//  Serial.println(pitchRate);
-//  leftMotor.forward(200);
-//  rightMotor.forward(200);
+  Serial.print(x()*100000);
+  Serial.print(" ");
+  Serial.print(xDot()*100000);
+  Serial.print(" ");
+  Serial.print(pitch*10000);
+  Serial.print(" ");  
+  Serial.print(pitchRate*10000);
+  Serial.print(" ");
+  Serial.println("\n");
 }
 
 ISR(TIMER3_COMPA_vect) {
@@ -76,7 +75,12 @@ ISR(TIMER3_COMPA_vect) {
 
 ISR(TIMER5_COMPA_vect){
   double torque, voltage; 
-  torque = -(K[0]*x() + K[1]*xDot() + K[2]*pitch*PI/180 + K[3]*pitchRate*PI/180);
+  if (abs(pitch) < 10) {
+     torque = -(K1[0]*x() + K1[1]*xDot() + K1[2]*pitch*PI/180 + K1[3]*pitchRate*PI/180);
+  }
+  else {
+    torque = -(K2[0]*x() + K2[1]*xDot() + K2[2]*pitch*PI/180 + K2[3]*pitchRate*PI/180);    
+  }
   voltage = (RESISTANCE*torque/(MOTOR_CONSTANT*GEAR_RATIO)); //+ (xDot()/0.03)*GEAR_RATIO*MOTOR_CONSTANT;
   driveMotors(voltage);  
 }

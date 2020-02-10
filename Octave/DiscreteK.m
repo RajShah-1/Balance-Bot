@@ -1,9 +1,9 @@
-function [dsys.A, dsys.B, G] = DiscreteK() 
+function [Ad, Bd, G] = DiscreteK(Q, R) 
 Mw = 0.033;
 Mb = 1.083;
-Ib = 79275.07 * 10^-7;
+Ib = 0.00555;
 Iw = 133.85 * 10^-7;
-l = 0.0772;
+l = 0.0615;
 k = Mb^2 * l^2 / (Mb * l^2 + Ib);
 g = 9.8;
 r = 0.03;
@@ -20,21 +20,11 @@ B = [0;
 
 % x, xDot, theta, thetaDot
 
-Q = [1 0 0 0;
-0 3 0 0;
-0 0 50 0;
-0 0 0 30];
-
-R = 20;
-
-<<<<<<< HEAD
-R = 40;
 csys = ss(A, B, zeros(4, 4), zeros(4, 1));
-=======
-csys = ss(A, B,zeros(4, 4),zeros(4, 1));
->>>>>>> a0288fa3794131ee28fdd88d0f917a3bc7a53699
 dsys = c2d(csys, 2*1e-3);
-[G, X, L] = dlqr(dsys.A,dsys.B, Q, R)
+[G, X, L] = dlqr(dsys.A,dsys.B, Q, R);
+Ad = dsys.A;
+Bd = dsys.B;
 
 % disp(G);
 
