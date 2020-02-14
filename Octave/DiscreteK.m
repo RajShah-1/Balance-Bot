@@ -1,4 +1,5 @@
-function [Ad, Bd, G] = DiscreteK(Q, R) 
+function [Ad, Bd, G] = DiscreteK(Q)
+R = 1; 
 Mw = 0.033;
 Mb = 1.083;
 Ib = 0.00555;

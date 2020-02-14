@@ -10,9 +10,6 @@
 
 const int MPUAddress = 0x68 << 1; // Device address in which is also included the 8th bit for selecting the mode, read in this case.
 
-double K1[] =  {-0.64795,  -1.47417,  -4.30420,  0}; 
-double K2[] = { -0.64795,  -1.47417,  -4.30420,  -0.81848}; 
-
 int16_t ay, az, gx;
 uint8_t tmpBytesArr2[2];
 
@@ -39,9 +36,19 @@ volatile double accFy, accFz, gyFx, gxVal, gxPrev;
 volatile double pitch, pitchPrev, pitchRate; 
 volatile unsigned long timeStampTimer5, currTimeTimer5, dT5;
 
+double torque, voltage;
+
+double K[] = {-0.12590, -0.49323, -2.49324, -0.70};
+
 MPU6050 mpu;
 Motor leftMotor(lM1, lM2, lME, lMA, lMB);
 Motor rightMotor(rM1, rM2, rME, rMA, rMB);
+
+int counter1 = 0;
+int counter2 = 1;
+double learningRate = 0.0005;
+double cost1 = 3000;
+double cost2 = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -55,32 +62,43 @@ void setup() {
 }
 
 void loop() {
-  Serial.print(x()*100000);
-  Serial.print(" ");
-  Serial.print(xDot()*100000);
-  Serial.print(" ");
-  Serial.print(pitch*10000);
-  Serial.print(" ");  
-  Serial.print(pitchRate*10000);
-  Serial.print(" ");
-  Serial.println("\n");
+    if (counter1 < 1000) {
+        cost2 += x()*x();
+        cost2 += xDot()*xDot();
+        cost2 += (pitch*M_PI/180)*(pitch*M_PI/180);
+        cost2 += (pitchRate*M_PI/180)*(pitchRate*M_PI/180);
+        counter1++;
+    }
+    else {
+        Serial.println("\n\n");
+        Serial.println("Done");
+        counter1 = 0;
+        K[counter2] -= learningRate*(cost2-cost1);
+        cost1 = cost2;
+        cost2 = 0;
+        if (counter2 == 3) {
+            counter2 = 0;
+        }
+        Serial.print("K : ");
+        Serial.print(K[0]);
+        Serial.print(K[1]);
+        Serial.print(K[2]);
+        Serial.println(K[3]);
+        Serial.println(cost1);
+        Serial.println("\n\n\n");
+    }
 }
 
 ISR(TIMER3_COMPA_vect) {
-    leftMotor.encoder.phiDot = 0.01163552835 * (leftMotor.encoder.rotation - leftMotor.encoder.lastRotation) / SAMPLING_TIME; //0.01163552835 = 2 * M_P! / 540.0
-    rightMotor.encoder.phiDot = 0.01163552835 * (rightMotor.encoder.rotation - rightMotor.encoder.lastRotation) / SAMPLING_TIME; //0.01163552835 = 2 * M_P! / 540.0
+    leftMotor.encoder.phiDot = 0.01163552835 * (leftMotor.encoder.rotation - leftMotor.encoder.lastRotation) / SAMPLING_TIME; //0.01163552835 = 2 * M_P1 / 540.0
+    rightMotor.encoder.phiDot = 0.01163552835 * (rightMotor.encoder.rotation - rightMotor.encoder.lastRotation) / SAMPLING_TIME; //0.01163552835 = 2 * M_P1 / 540.0
     leftMotor.encoder.lastRotation = leftMotor.encoder.rotation;
     rightMotor.encoder.lastRotation = rightMotor.encoder.rotation;        
 }
 
 ISR(TIMER5_COMPA_vect){
-  double torque, voltage; 
-  if (abs(pitch) < 10) {
-     torque = -(K1[0]*x() + K1[1]*xDot() + K1[2]*pitch*PI/180 + K1[3]*pitchRate*PI/180);
-  }
-  else {
-    torque = -(K2[0]*x() + K2[1]*xDot() + K2[2]*pitch*PI/180 + K2[3]*pitchRate*PI/180);    
-  }
+  
+  torque = -(K[0]*x() + K[1]*xDot() + K[2]*pitch*PI/180 + K[3]*pitchRate*PI/180);
   voltage = (RESISTANCE*torque/(MOTOR_CONSTANT*GEAR_RATIO)); //+ (xDot()/0.03)*GEAR_RATIO*MOTOR_CONSTANT;
   driveMotors(voltage);  
 }
