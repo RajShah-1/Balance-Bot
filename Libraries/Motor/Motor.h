@@ -49,4 +49,6 @@ void driveMotors(double voltage);
 extern Motor rightMotor;
 extern Motor leftMotor;
 
+extern volatile long globalAnalogVal;
+
 #endif

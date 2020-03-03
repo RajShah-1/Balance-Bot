@@ -107,7 +107,7 @@ void RCModule:: getJoystickData(){
   Serial.print(control[0]);
   Serial.print(" ");
   Serial.print("AD1 = ");    
-  Serial.println(AD1);
+  Serial.print(AD1);
 
   // Thresolding
   if(AD2 >= 400 && AD2 <= 750) control[1] = 0;
@@ -115,10 +115,10 @@ void RCModule:: getJoystickData(){
   else if(AD2 > 750) control[1] = -1;
   
   // Debugging statements
-  Serial.print("C2 = ");    
+  Serial.print(" C2 = ");    
   Serial.print(control[1]);
   Serial.print(" ");
-  Serial.print("AD2 = ");    
+  Serial.print(" AD2 = ");    
   Serial.println(AD2);
 }
 

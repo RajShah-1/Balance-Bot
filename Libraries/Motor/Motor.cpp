@@ -95,6 +95,8 @@ void driveMotors (double voltage) {
     leftMotor.generate((int) (analogVal + offset));
     //Serial.print("Right Voltage : ");
     rightMotor.generate((int) (analogVal - offset));
+    globalAnalogVal = analogVal;
+    // Serial.println(analogVal);
     //Serial.print("Difference of rotation : ");
     //Serial.println(offset/5);
 }
