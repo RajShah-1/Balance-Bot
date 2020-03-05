@@ -13,6 +13,10 @@ The objective is to make a remote control robot capable of balancing itself usin
 - Breadboard
 - Wheels
 
+# Status
+Currently, the bot can balance on two-wheel. We're tuning the parameters to improve the balance. 
+We are also working on the Xbee based remote parallelly.
+
 # 3D Model of Chassis
 - 3D Modelling of robot is done in solidworks, and those files are available in 3D Model folder.
 ![](images/model.JPG)
